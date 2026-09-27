@@ -1,0 +1,11 @@
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../generated/prisma/client.js';
+import { config } from '../config/env.js';
+
+const adapter = new PrismaPg({ connectionString: config.DATABASE_URL });
+
+export const prisma = new PrismaClient({ adapter });
+
+export type Db = typeof prisma;
+/** Interactive-transaction client type. */
+export type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];

@@ -1,0 +1,69 @@
+# Local development infrastructure. Credentials match DATABASE_URL in .env.example.
+# NOT for production: use a managed PostgreSQL with TLS, backups and secret-managed credentials.
+#   docker compose up -d        # start PostgreSQL
+#   docker compose down         # stop (data kept in the named volume)
+#   docker compose down -v      # stop and DELETE all local data
+name: healthcare-app
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthcare-app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: careflow
+      POSTGRES_PASSWORD: careflow_dev
+      POSTGRES_DB: careflow
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U careflow -d careflow']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # Full stack (profile "app"): `docker compose --profile app up -d --build`
+  # Needs AUTH_SECRET in .env (openssl rand -base64 48). Local/demo use only — see docs/DEPLOYMENT.md.
+  migrate:
+    profiles: ['app']
+    build: { context: ., target: migrate }
+    environment:
+      DATABASE_URL: postgresql://careflow:careflow_dev@postgres:5432/careflow?schema=public
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    profiles: ['app']
+    build: { context: ., target: api }
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      DATABASE_URL: postgresql://careflow:careflow_dev@postgres:5432/careflow?schema=public
+      APP_BASE_URL: http://localhost:8080
+      CORS_ORIGINS: http://localhost:8080
+      # Plain-HTTP localhost only. Behind TLS in any shared environment set COOKIE_SECURE=true.
+      COOKIE_SECURE: 'false'
+      DEMO_MODE: 'true'
+      ENABLE_TEST_ROUTES: 'false'
+    volumes:
+      - storage:/app/var/storage
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  web:
+    profiles: ['app']
+    build: { context: ., target: web }
+    ports:
+      - '8080:8080'
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  storage:

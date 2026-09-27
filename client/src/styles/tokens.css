@@ -1,0 +1,98 @@
+/*
+ * Design tokens — calm, trustworthy, minimal.
+ * One restrained accent (deep teal) plus semantic states. All text colours meet WCAG AA on
+ * their intended backgrounds. Spacing follows an 8px grid (4px half-steps for tight UI).
+ */
+:root {
+  color-scheme: light;
+
+  /* Neutrals */
+  --color-bg: #f6f8f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f4f4;
+  --color-surface-sunken: #e9eeee;
+  --color-border: #d5dddd;
+  --color-border-strong: #a9b6b6;
+  --color-text: #17202a;
+  --color-text-muted: #4a5763;
+  --color-text-subtle: #5f6b76;
+  --color-text-inverse: #ffffff;
+
+  /* Accent: deep teal */
+  --color-accent: #0f5e59;
+  --color-accent-hover: #0b4a46;
+  --color-accent-soft: #e3f1ef;
+  --color-accent-softer: #f0f8f7;
+  --color-accent-text: #0b4f4b;
+
+  /* Semantic states (text colour / background / border) */
+  --color-success: #17663f;
+  --color-success-bg: #e6f4ec;
+  --color-success-border: #9fd2b4;
+  --color-warning: #7a4d00;
+  --color-warning-bg: #fdf3dc;
+  --color-warning-border: #e8c46e;
+  --color-error: #a61b1b;
+  --color-error-bg: #fcebea;
+  --color-error-border: #eba4a0;
+  --color-info: #1a4f8f;
+  --color-info-bg: #e8f0fb;
+  --color-info-border: #a9c3ea;
+  --color-neutral-badge: #3f4b56;
+  --color-neutral-badge-bg: #eceff1;
+
+  --color-focus: #1a4f8f;
+  --color-overlay: rgba(15, 23, 30, 0.48);
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Spacing (8px grid) */
+  --space-0: 0;
+  --space-half: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+
+  /* Shape & elevation */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 32, 0.06);
+  --shadow-md: 0 2px 8px rgba(16, 24, 32, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 32, 0.18);
+
+  /* Layout */
+  --target-min: 44px;
+  --sidebar-width: 248px;
+  --topbar-height: 60px;
+  --content-max: 1200px;
+  --reading-max: 720px;
+
+  --transition-fast: 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+  }
+}

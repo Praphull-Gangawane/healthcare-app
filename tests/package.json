@@ -1,0 +1,19 @@
+{
+  "name": "tests",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.3",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.0",
+    "typescript": "~5.9.3"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "cd .. && playwright test",
+    "test:api": "cd .. && playwright test --project=api"
+  }
+}

@@ -1,0 +1,1887 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Clinic Journey Demo</title>
+<style>
+/* ---------- Tokens ---------- */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --surface-2:#f0f3f4; --surface-3:#e6ebed;
+  --border:#d8dfe2; --border-strong:#aab6bc;
+  --text:#14202a; --text-2:#3c4a56; --muted:#56636e;
+  --accent:#0b5e63; --accent-hover:#08494d; --accent-soft:#e1efef; --accent-text:#0b5e63; --on-accent:#ffffff;
+  --success:#1a6837; --success-soft:#e4f2e8; --success-border:#9ccfae;
+  --warning:#875000; --warning-soft:#fff2d6; --warning-border:#e8c06f;
+  --error:#b3261e; --error-soft:#fcebea; --error-border:#eea9a3;
+  --info:#1f4d78; --info-soft:#e7eff7; --info-border:#b3cbe2;
+  --focus:#0b5e63;
+  --doc-tint:#f2f4f8; --doc-accent:#394a66; --doc-soft:#e4e9f2;
+  --banner-bg:#14202a; --banner-text:#ffffff; --banner-mark:#ffd67f;
+  --shadow-sm:0 1px 2px rgba(16,24,32,.06);
+  --shadow:0 1px 3px rgba(16,24,32,.07),0 8px 24px rgba(16,24,32,.06);
+  --radius:14px; --radius-sm:9px;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1215; --surface:#151c20; --surface-2:#1a2328; --surface-3:#222d33;
+    --border:#2b373e; --border-strong:#4a5961;
+    --text:#e6edf0; --text-2:#c3cdd3; --muted:#a2aeb5;
+    --accent:#5ec4bf; --accent-hover:#82d5d1; --accent-soft:#15363a; --accent-text:#82d5d1; --on-accent:#04282a;
+    --success:#7ad69b; --success-soft:#13301e; --success-border:#2f6b45;
+    --warning:#f2c06a; --warning-soft:#33270e; --warning-border:#6e5521;
+    --error:#ff9a90; --error-soft:#3a1714; --error-border:#7a3129;
+    --info:#9fc6ec; --info-soft:#142536; --info-border:#2f4c69;
+    --focus:#82d5d1;
+    --doc-tint:#141a23; --doc-accent:#a9b8d3; --doc-soft:#1e2635;
+    --banner-bg:#000000; --banner-text:#ffffff; --banner-mark:#ffd67f;
+    --shadow-sm:none; --shadow:0 1px 0 rgba(255,255,255,.03);
+  }
+}
+
+/* ---------- Base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:16px}
+body{margin:0;font-family:var(--font);font-size:16px;line-height:1.5;color:var(--text);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+h1,h2,h3,h4{line-height:1.25;margin:0;color:var(--text)}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.icon{width:20px;height:20px;flex:none;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon.sm{width:16px;height:16px}
+.icon.lg{width:28px;height:28px}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.mono{font-family:var(--mono);letter-spacing:.01em}
+
+.skip{position:absolute;left:12px;top:-60px;z-index:100;background:var(--accent);color:var(--on-accent);padding:12px 16px;border-radius:8px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+
+/* ---------- Banner / header ---------- */
+.demo-banner{background:var(--banner-bg);color:var(--banner-text);font-size:.8125rem;font-weight:700;letter-spacing:.08em;text-align:center;padding:8px 16px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.demo-banner .icon{color:var(--banner-mark)}
+.demo-banner .sub{font-weight:500;letter-spacing:.02em;opacity:.85}
+
+.app-header{background:var(--surface);border-bottom:1px solid var(--border)}
+.wrap{width:100%;max-width:1240px;margin:0 auto;padding:0 16px}
+.app-header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:750;font-size:1.125rem;letter-spacing:-.01em}
+.brand-mark{width:34px;height:34px;flex:none}
+.brand small{display:block;font-weight:500;font-size:.8125rem;color:var(--muted);letter-spacing:0}
+.mode-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:.875rem;font-weight:600;background:var(--accent-soft);color:var(--accent-text);border:1px solid transparent;transition:background .25s var(--ease),color .25s var(--ease)}
+body[data-mode="doctor"] .mode-pill{background:var(--doc-soft);color:var(--doc-accent);border-color:var(--border)}
+
+/* ---------- Layout ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding-top:20px;padding-bottom:32px;flex:1}
+@media (min-width:1000px){
+  .layout{grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+  .rail{position:sticky;top:56px}
+}
+main{min-width:0}
+main:focus{outline:none}
+.progress-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.progress-head p{font-size:.875rem;color:var(--muted);font-weight:600}
+.progress-track{flex:1;min-width:120px;height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden}
+.progress-track span{display:block;height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width .35s var(--ease)}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;position:relative;transition:background .3s var(--ease),border-color .3s var(--ease)}
+body[data-mode="doctor"] .panel{background:var(--doc-tint);border-top:4px solid var(--doc-accent)}
+@media (max-width:560px){.panel{padding:18px 16px}}
+
+.step{animation:stepIn .28s var(--ease)}
+@keyframes stepIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.step-head{margin-bottom:20px}
+.eyebrow{font-size:.8125rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-text);margin-bottom:6px;display:flex;gap:6px;align-items:center}
+body[data-mode="doctor"] .eyebrow{color:var(--doc-accent)}
+.step-head h1{font-size:1.625rem;letter-spacing:-.015em}
+.step-head h1:focus{outline:none}
+.step-head h1:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
+.lede{color:var(--text-2);margin-top:6px;max-width:62ch}
+.section-title{font-size:1.0625rem;margin:22px 0 10px}
+.section-title:first-child{margin-top:0}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s,transform .1s}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled],.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+body[data-mode="doctor"] .btn-primary{background:var(--doc-accent);border-color:var(--doc-accent);color:var(--surface)}
+body[data-mode="doctor"] .btn-primary:hover{filter:brightness(1.1)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--accent-text)}
+.btn-ghost:hover{background:var(--accent-soft)}
+.btn-danger{color:var(--error);border-color:var(--error-border)}
+.btn-danger:hover{background:var(--error-soft)}
+.btn-block{width:100%}
+.btn-icon{padding:0;width:44px;min-width:44px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* ---------- Step nav ---------- */
+.step-nav{position:sticky;bottom:0;z-index:20;margin-top:16px;display:flex;align-items:center;gap:12px;padding:12px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.step-nav .nav-hint{flex:1;font-size:.875rem;color:var(--muted);min-width:0}
+.step-nav .nav-hint.warn{color:var(--warning);font-weight:600}
+@media (max-width:560px){
+  .step-nav{border-radius:12px 12px 0 0;margin-left:-16px;margin-right:-16px;border-left:0;border-right:0;border-bottom:0;flex-wrap:wrap}
+  .step-nav .nav-hint{order:-1;flex-basis:100%}
+  .step-nav .nav-hint:empty{display:none}
+  .step-nav .btn{flex:1}
+}
+
+/* ---------- Rail ---------- */
+.rail{display:grid;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+.journey summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:700;min-height:48px;border-radius:var(--radius)}
+.journey summary::-webkit-details-marker{display:none}
+.journey summary .chev{transition:transform .2s}
+.journey[open] summary .chev{transform:rotate(180deg)}
+.journey-body{padding:0 10px 12px}
+.journey h3{font-size:.75rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 8px 4px}
+.journey ol{list-style:none;margin:0;padding:0}
+.journey li button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 8px;border-radius:9px;cursor:pointer;font-size:.9375rem;color:var(--text-2)}
+.journey li button:hover:not([disabled]){background:var(--surface-2)}
+.journey li button:focus-visible{outline:3px solid var(--focus);outline-offset:0}
+.journey li button[disabled]{cursor:not-allowed;color:var(--muted)}
+.journey li button[aria-current="step"]{background:var(--accent-soft);color:var(--accent-text);font-weight:700}
+body[data-mode="doctor"] .journey li button[aria-current="step"]{background:var(--doc-soft);color:var(--doc-accent)}
+.jdot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700;border:1.5px solid var(--border-strong);background:var(--surface);flex:none;color:var(--muted)}
+.done .jdot{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+[aria-current="step"] .jdot{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+body[data-mode="doctor"] [aria-current="step"] .jdot{background:var(--doc-accent);border-color:var(--doc-accent);color:var(--surface)}
+
+.phone-card{padding:16px}
+.phone-card h2{font-size:1rem;display:flex;align-items:center;gap:8px}
+.phone-card > p{margin-top:2px}
+
+/* ---------- Phone mock ---------- */
+.phone{width:100%;max-width:320px;margin:12px auto 0;border-radius:28px;border:1px solid var(--border-strong);background:var(--surface-2);padding:10px;box-shadow:var(--shadow)}
+.phone-screen{border-radius:20px;background:var(--surface);overflow:hidden;border:1px solid var(--border);min-height:220px;display:flex;flex-direction:column}
+.phone-top{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.phone-top .ava{width:32px;height:32px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center;font-weight:700;font-size:.75rem;flex:none}
+.phone-top b{display:block;font-size:.875rem}
+.phone-top span{font-size:.75rem;color:var(--muted)}
+.phone-body{padding:14px 12px;display:flex;flex-direction:column;gap:10px;flex:1}
+.phone-body.chat{background:repeating-linear-gradient(135deg,var(--surface) 0 14px,var(--surface-2) 14px 15px)}
+.bubble{max-width:92%;background:var(--surface-3);border-radius:16px 16px 16px 4px;padding:10px 12px;font-size:.875rem;line-height:1.45;overflow-wrap:anywhere;animation:pop .3s var(--ease)}
+.bubble.wa{background:var(--success-soft);border:1px solid var(--success-border)}
+.bubble.pending{border:1px dashed var(--border-strong);background:var(--surface)}
+.bubble .meta{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:.75rem;color:var(--muted)}
+.bubble .tpl{display:inline-flex;align-items:center;gap:6px;font-size:.6875rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--success);margin-bottom:4px}
+.fake-link{color:var(--info);text-decoration:underline;text-underline-offset:2px}
+@keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.inbox{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.inbox .ch{display:inline-flex;align-items:center;gap:4px;font-size:.6875rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.empty{font-size:.875rem;color:var(--muted);text-align:center;padding:24px 8px}
+
+/* ---------- Forms ---------- */
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field > label,.label{font-weight:600;font-size:.9375rem}
+.opt{font-weight:400;color:var(--muted);font-size:.875rem}
+.hint{font-size:.8125rem;color:var(--muted)}
+.input,select.input,textarea.input{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);color:var(--text);transition:border-color .15s,box-shadow .15s}
+textarea.input{min-height:88px;resize:vertical}
+.input:hover{border-color:var(--muted)}
+.input:focus-visible{outline:3px solid var(--focus);outline-offset:1px;border-color:var(--accent)}
+.input[aria-invalid="true"]{border-color:var(--error);box-shadow:0 0 0 1px var(--error)}
+.input[disabled],.input[readonly]{background:var(--surface-2);color:var(--text-2)}
+.field-error{display:flex;gap:6px;align-items:flex-start;color:var(--error);font-size:.875rem;font-weight:600}
+.field-error .icon{width:18px;height:18px;margin-top:1px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.form-grid .full{grid-column:1/-1}
+@media (max-width:640px){.form-grid{grid-template-columns:minmax(0,1fr)}}
+.prefix-input{display:flex;align-items:stretch}
+.prefix-input .prefix{display:flex;align-items:center;padding:0 12px;border:1px solid var(--border-strong);border-right:0;border-radius:9px 0 0 9px;background:var(--surface-2);font-weight:600;color:var(--text-2)}
+.prefix-input .input{border-radius:0 9px 9px 0;min-width:0}
+.unit-input{position:relative}
+.unit-input .input{padding-right:64px}
+.unit-input .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:.8125rem;color:var(--muted);font-weight:600;pointer-events:none}
+fieldset{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px 16px;margin:0;min-width:0}
+legend{font-weight:700;padding:0 6px}
+.check{display:flex;gap:12px;align-items:flex-start;padding:8px 0;min-height:44px}
+.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.check label{font-weight:600}
+.check .hint{display:block;font-weight:400}
+
+.switch{display:flex;align-items:center;gap:12px;min-height:44px}
+.switch input{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:99px;background:var(--border-strong);position:relative;cursor:pointer;flex:none;margin:0;transition:background .2s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s var(--ease)}
+.switch input:checked{background:var(--warning)}
+.switch input:checked::after{transform:translateX(18px)}
+.switch input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.switch label{font-weight:600;cursor:pointer}
+.switch-state{font-size:.8125rem;font-weight:700;color:var(--muted);min-width:24px}
+.sim-box{margin-top:22px;border:1px dashed var(--warning-border);background:var(--warning-soft);border-radius:var(--radius-sm);padding:12px 14px}
+.sim-box .tag{font-size:.6875rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning)}
+
+/* ---------- Alerts / badges ---------- */
+.alert{display:flex;gap:12px;align-items:flex-start;border:1px solid;border-radius:var(--radius-sm);padding:12px 14px;font-size:.9375rem}
+.alert .icon{margin-top:1px}
+.alert b{display:block}
+.alert.success{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+.alert.warning{background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning)}
+.alert.error{background:var(--error-soft);border-color:var(--error-border);color:var(--error)}
+.alert.info{background:var(--info-soft);border-color:var(--info-border);color:var(--info)}
+.alert p{color:var(--text-2)}
+.alert + .alert{margin-top:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid}
+.badge.draft{background:var(--warning-soft);color:var(--warning);border-color:var(--warning-border)}
+.badge.final{background:var(--success-soft);color:var(--success);border-color:var(--success-border)}
+.badge.neutral{background:var(--surface-2);color:var(--text-2);border-color:var(--border)}
+.status{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:.9375rem}
+.status.ok{color:var(--success)}
+.status.review{color:var(--warning)}
+.status.bad{color:var(--error)}
+
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;display:inline-block;animation:spin .75s linear infinite;flex:none;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- Find doctor ---------- */
+.search{position:relative}
+.search .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search .input{padding-left:42px;font-size:1rem;min-height:48px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.chip{min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);cursor:pointer;font-weight:600;font-size:.9063rem;display:inline-flex;align-items:center;gap:6px;transition:background .15s,border-color .15s}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip[aria-pressed="false"] .icon{display:none}
+.results-meta{font-size:.875rem;color:var(--muted);margin:10px 0 12px}
+.doc-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:14px}
+.doc-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s,box-shadow .2s}
+.doc-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+.doc-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.doc-top{display:flex;gap:12px;align-items:flex-start}
+.avatar{width:48px;height:48px;border-radius:14px;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center;font-weight:800;letter-spacing:.02em;flex:none}
+.avatar.xl{width:72px;height:72px;border-radius:20px;font-size:1.375rem}
+.doc-name{font-size:1.0625rem}
+.qual{font-size:.875rem;color:var(--text-2)}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.875rem}
+.facts dt{color:var(--muted)}
+.facts dd{margin:0;font-weight:600;min-width:0}
+.next-slot{display:flex;gap:8px;align-items:center;font-size:.875rem;background:var(--surface-2);padding:8px 10px;border-radius:8px;color:var(--text-2)}
+.next-slot .icon{color:var(--accent-text)}
+.doc-card .btn{margin-top:auto}
+.no-results{padding:32px 16px;text-align:center;border:1px dashed var(--border-strong);border-radius:var(--radius);color:var(--muted)}
+
+/* ---------- Profile ---------- */
+.profile{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
+@media (max-width:560px){.profile{grid-template-columns:1fr}}
+.profile h2{font-size:1.375rem}
+.tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag-s{font-size:.8125rem;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2)}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin-top:18px}
+.kv{background:var(--surface-2);border-radius:10px;padding:12px 14px;min-width:0}
+.kv span{display:block;font-size:.8125rem;color:var(--muted)}
+.kv b{display:block;font-size:1rem;overflow-wrap:anywhere}
+
+/* ---------- Date & slots ---------- */
+.date-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(72px,1fr);gap:8px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.date-btn{scroll-snap-align:start;min-height:76px;border:1px solid var(--border-strong);background:var(--surface);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:8px 4px;transition:background .15s,border-color .15s}
+.date-btn:hover:not([disabled]){background:var(--surface-2)}
+.date-btn .dw{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.date-btn .dd{font-size:1.25rem;font-weight:750}
+.date-btn .dm{font-size:.75rem;color:var(--muted)}
+.date-btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.date-btn[aria-pressed="true"] .dw,.date-btn[aria-pressed="true"] .dm{color:inherit}
+.date-btn[disabled]{background:var(--surface-2);border-style:dashed;cursor:not-allowed}
+.date-btn[disabled] .dd{color:var(--muted)}
+.slot-group h3{font-size:.875rem;color:var(--text-2);margin:14px 0 8px;display:flex;gap:6px;align-items:center}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(106px,1fr));gap:8px}
+.slot{min-height:48px;border:1px solid var(--border-strong);background:var(--surface);border-radius:10px;cursor:pointer;font-weight:650;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:4px 6px;line-height:1.2;transition:background .15s,border-color .15s}
+.slot:hover:not([disabled]){background:var(--surface-2);border-color:var(--accent)}
+.slot small{font-size:.6875rem;font-weight:600;display:inline-flex;align-items:center;gap:3px;color:var(--muted)}
+.slot[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.slot[aria-pressed="true"] small{color:inherit}
+.slot[disabled]{cursor:not-allowed;background:var(--surface-2);color:var(--muted);border-style:dashed;text-decoration:line-through;text-decoration-thickness:1px}
+.slot[disabled] small{text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.8125rem;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--border-strong);background:var(--surface)}
+.sw.sel{background:var(--accent);border-color:var(--accent)}
+.sw.bk{background:var(--surface-2);border-style:dashed}
+.hold{margin-top:16px;min-height:0}
+.hold-row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.timer{font-family:var(--mono);font-weight:700}
+
+/* ---------- Review / summary ---------- */
+.review{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.review-sec{padding:16px 18px;border-top:1px solid var(--border)}
+.review-sec:first-child{border-top:0}
+.review-sec h2{font-size:.8125rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px}
+.dl{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:6px 16px;margin:0}
+.dl dt{color:var(--muted);font-size:.9375rem}
+.dl dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+@media (max-width:420px){.dl{grid-template-columns:1fr}.dl dd{margin-bottom:6px}}
+.confirm-hero{display:flex;gap:16px;align-items:center;padding:18px;border-radius:var(--radius);background:var(--success-soft);border:1px solid var(--success-border);margin-bottom:18px}
+.confirm-hero .ring{width:52px;height:52px;border-radius:50%;background:var(--success);color:var(--surface);display:grid;place-items:center;flex:none;animation:pop .4s var(--ease)}
+.confirm-hero h2{font-size:1.25rem;color:var(--success)}
+.confirm-hero p{color:var(--text-2)}
+.id-box{display:inline-flex;flex-direction:column;padding:10px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
+.id-box span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.id-box b{font-family:var(--mono);font-size:1.125rem}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:760px){.two-col{grid-template-columns:minmax(0,1fr) minmax(0,300px)}}
+.msg-previews{display:grid;gap:12px}
+
+/* ---------- Doctor view ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;min-width:0}
+.stat span{display:block;font-size:.8125rem;color:var(--muted);font-weight:600}
+.stat b{display:block;font-size:1.375rem;letter-spacing:-.01em}
+.stat.now{border-color:var(--doc-accent);box-shadow:inset 3px 0 0 var(--doc-accent)}
+.pt-card{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:grid;gap:12px}
+.pt-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pt-head .avatar{background:var(--doc-soft);color:var(--doc-accent)}
+.pt-head h2{font-size:1.125rem}
+.pt-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.875rem;color:var(--text-2)}
+.pt-meta b{font-family:var(--mono)}
+.allergy{display:inline-flex;gap:6px;align-items:center;font-size:.875rem;font-weight:600;color:var(--warning);background:var(--warning-soft);border:1px solid var(--warning-border);padding:4px 10px;border-radius:8px}
+.soap{display:grid;gap:14px;margin-top:6px}
+.soap .field > label{display:flex;gap:10px;align-items:center}
+.soap-letter{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--doc-soft);color:var(--doc-accent);font-weight:800;flex:none}
+
+/* ---------- Vitals ---------- */
+.vitals-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@media (min-width:860px){.vitals-layout{grid-template-columns:minmax(0,1fr) 290px;align-items:start}}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:14px}
+.bp-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.bp-pair .sep{font-weight:700;color:var(--muted)}
+.bmi-out{display:flex;align-items:baseline;gap:6px;min-height:44px;padding:10px 12px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);font-weight:700}
+.hr-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:grid;gap:12px}
+.hr-card h2{font-size:1rem;display:flex;gap:8px;align-items:center}
+.hr-card .heart{color:var(--error)}
+.hr-value{font-size:2.25rem;font-weight:800;letter-spacing:-.02em;line-height:1;display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.hr-value small{font-size:1rem;font-weight:600;color:var(--muted)}
+.hr-src{font-size:.875rem;color:var(--text-2)}
+.hr-card.reading .heart{animation:beat .8s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}30%{transform:scale(1.22)}60%{transform:scale(.95)}}
+.ecg{width:100%;height:40px;color:var(--accent-text);opacity:.35}
+.hr-card.reading .ecg{opacity:1}
+.ecg path{stroke-dasharray:260;stroke-dashoffset:0}
+.hr-card.reading .ecg path{animation:trace 1.2s linear infinite}
+@keyframes trace{from{stroke-dashoffset:260}to{stroke-dashoffset:0}}
+.range-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- Prescription builder ---------- */
+.rx-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.med-list{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:med}
+.med{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.med-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.med-head h3{font-size:.9375rem;display:flex;align-items:center;gap:8px}
+.med-num{width:26px;height:26px;border-radius:8px;background:var(--doc-soft);color:var(--doc-accent);display:grid;place-items:center;font-size:.8125rem;font-weight:800}
+.med-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.med-grid .w2{grid-column:span 2}
+.med-grid .full{grid-column:1/-1}
+@media (max-width:760px){.med-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.med-grid{grid-template-columns:minmax(0,1fr)}.med-grid .w2{grid-column:auto}}
+.med-grid .field > label{font-size:.8125rem}
+.med-summary{font-size:.875rem;color:var(--text-2);margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.med-actions{display:flex;gap:6px}
+
+/* ---------- Prescription paper ---------- */
+.rx-paper{--p-text:#16202a;--p-muted:#56626c;--p-line:#d9dfe3;--p-accent:#0b5e63;background:#fff;color:var(--p-text);border:1px solid var(--border);border-radius:10px;padding:28px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.rx-paper h2,.rx-paper h3{color:var(--p-text)}
+.rx-watermark{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:0}
+.rx-watermark span{transform:rotate(-24deg);font-size:clamp(1.5rem,5.2vw,3.4rem);font-weight:900;letter-spacing:.06em;color:rgba(179,38,30,.13);text-align:center;line-height:1.15;border:5px solid rgba(179,38,30,.13);padding:10px 18px;border-radius:12px;white-space:nowrap}
+.rx-paper > *:not(.rx-watermark){position:relative;z-index:1}
+.rx-top{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--p-accent);padding-bottom:14px}
+.rx-clinic{display:flex;gap:12px;align-items:center}
+.rx-clinic h2{font-size:1.25rem;color:var(--p-accent)}
+.rx-clinic p,.rx-doc p{font-size:.8125rem;color:var(--p-muted)}
+.rx-doc{text-align:right}
+.rx-doc b{font-size:1rem}
+@media (max-width:560px){.rx-doc{text-align:left}.rx-paper{padding:18px 14px}}
+.rx-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px 18px;padding:12px 0;border-bottom:1px solid var(--p-line);font-size:.875rem}
+.rx-meta span{display:block;color:var(--p-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.rx-meta b{overflow-wrap:anywhere}
+.rx-symbol{font-size:1.75rem;font-weight:800;color:var(--p-accent);font-family:Georgia,"Times New Roman",serif;margin:12px 0 4px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rx-table{width:100%;border-collapse:collapse;font-size:.875rem;min-width:560px}
+.rx-table th{text-align:left;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--p-muted);border-bottom:1px solid var(--p-line);padding:8px 8px}
+.rx-table td{border-bottom:1px solid var(--p-line);padding:9px 8px;vertical-align:top}
+.rx-table td small{color:var(--p-muted);display:block}
+.rx-sec{margin-top:14px;font-size:.9063rem}
+.rx-sec h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--p-muted);margin-bottom:4px}
+.rx-sec p{white-space:pre-line}
+.rx-foot{margin-top:18px;padding-top:12px;border-top:1px solid var(--p-line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.8125rem;color:var(--p-muted)}
+.rx-auth{display:flex;gap:8px;align-items:flex-start;max-width:48ch}
+.rx-auth .icon{color:var(--p-accent)}
+
+/* ---------- Timeline ---------- */
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.timeline li{display:grid;grid-template-columns:32px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.timeline li:not(:last-child)::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:2px;background:var(--border)}
+.timeline li.done:not(:last-child)::before{background:var(--success-border)}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--border-strong);background:var(--surface);color:var(--muted)}
+.done .tl-dot{background:var(--success-soft);border-color:var(--success-border);color:var(--success)}
+.current .tl-dot{border-color:var(--accent);color:var(--accent-text)}
+.timeline b{display:block}
+.timeline span{font-size:.8125rem;color:var(--muted)}
+.flow{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:flow}
+@media (max-width:640px){.flow{grid-template-columns:minmax(0,1fr)}}
+.flow li{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;display:grid;gap:4px;font-size:.875rem;color:var(--text-2)}
+.flow li b{color:var(--text);display:flex;gap:8px;align-items:center;font-size:.9375rem}
+.flow .n{width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center;font-size:.75rem;font-weight:800;flex:none}
+.send-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width:760px){.send-grid{grid-template-columns:minmax(0,320px) minmax(0,1fr)}}
+
+/* ---------- Complete ---------- */
+.done-hero{text-align:center;padding:12px 0 20px}
+.done-hero .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-text)}
+.sum-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.sum-list li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.sum-list li .icon{margin-top:2px}
+.sum-list li.ok .icon{color:var(--success)}
+.sum-list li.skip .icon{color:var(--warning)}
+.sum-list b{display:block}
+.sum-list span{font-size:.875rem;color:var(--text-2)}
+
+/* ---------- Dialog ---------- */
+dialog{border:1px solid var(--border);border-radius:16px;padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,18,24,.55);backdrop-filter:blur(2px)}
+dialog[open]{animation:pop .22s var(--ease)}
+.dlg-body{padding:22px 22px 8px}
+.dlg-body h2{font-size:1.25rem;display:flex;gap:10px;align-items:center}
+.dlg-body p,.dlg-body ul{color:var(--text-2);margin-top:10px}
+.dlg-body ul{padding-left:20px}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;padding:16px 22px 22px;flex-wrap:wrap}
+
+/* ---------- Footer ---------- */
+.site-footer{border-top:1px solid var(--border);background:var(--surface);padding:18px 0 22px;font-size:.875rem;color:var(--text-2)}
+.site-footer .wrap{display:grid;gap:8px}
+.site-footer .disc{display:flex;gap:10px;align-items:flex-start;max-width:90ch}
+.site-footer .disc .icon{color:var(--warning);margin-top:1px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .spinner{animation:spin 1.6s linear infinite !important}
+}
+
+/* ---------- Print: prescription only ---------- */
+@media print{
+  @page{margin:12mm}
+  html,body{background:#fff !important;color:#000 !important}
+  .skip,.demo-banner,.app-header,.rail,.step-nav,.progress-head,.site-footer,.no-print,.step-head,dialog{display:none !important}
+  .step{display:none !important;animation:none !important}
+  .step[data-step="prescription-ready"]{display:block !important}
+  .layout{display:block;padding:0}
+  .wrap{max-width:none;padding:0}
+  .panel{border:0 !important;box-shadow:none !important;padding:0 !important;background:#fff !important}
+  .rx-paper{border:0;box-shadow:none;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rx-table{min-width:0}
+  .rx-watermark span{font-size:3.2rem}
+}
+</style>
+</head>
+<body data-mode="patient">
+<a class="skip" href="#main">Skip to main content</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.2 9.8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.2 2.6 17.6A2 2 0 0 0 4.3 20.6h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4.5"/><path d="M12 17.2h.01"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.8h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.4A4.1 4.1 0 0 1 12 7.2a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18h3"/></symbol>
+    <symbol id="i-sms" viewBox="0 0 24 24"><path d="M4 5.5h16v11H9.5L5 20v-3.5H4z"/><path d="M8 10h8M8 13h5"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.1A8 8 0 1 1 20 11.5z"/><path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.5h10V9"/><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.8-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.7-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-device" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="3.5"/><path d="M9 6V3h6v3M9 18v3h6v-3M9 12h1.5l1-2 1.5 4 1-2H15"/></symbol>
+    <symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v5a4.5 4.5 0 0 0 9 0V3"/><path d="M9.5 12.5v2a5 5 0 0 0 10 0V12"/><circle cx="19.5" cy="10" r="2"/></symbol>
+    <symbol id="i-pill" viewBox="0 0 24 24"><path d="M10.5 20.5a5 5 0 0 1-7-7l6-6a5 5 0 0 1 7 7z"/><path d="M8.5 8.5l7 7"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h5"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5z"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></symbol>
+    <symbol id="i-queue" viewBox="0 0 24 24"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="7" r="2.5"/><path d="M2.5 19c.5-3 2.3-4.5 4.5-4.5s4 1.5 4.5 4.5M12.5 19c.5-3 2.3-4.5 4.5-4.5s4 1.5 4.5 4.5"/></symbol>
+    <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+  </defs>
+</svg>
+
+<div class="demo-banner" role="note">
+  <svg class="icon sm" aria-hidden="true"><use href="#i-alert"/></svg>
+  <span>DEMO DATA · NOT MEDICAL ADVICE</span>
+  <span class="sub">All people, clinics and records are fictional</span>
+</div>
+
+<header class="app-header">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 34 34" aria-hidden="true" focusable="false">
+        <rect x="1" y="1" width="32" height="32" rx="10" fill="var(--accent)"/>
+        <path d="M14 8.5h6v5.5h5.5v6H20v5.5h-6V20H8.5v-6H14z" fill="var(--on-accent)" opacity=".95"/>
+      </svg>
+      <span><span data-app-name></span><small>Riverside Demo Clinic · Kochi</small></span>
+    </div>
+    <span class="mode-pill" id="modePill" aria-live="polite">
+      <svg class="icon sm" aria-hidden="true"><use href="#i-user"/></svg><span id="modeText">Patient view</span>
+    </span>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <main id="main" tabindex="-1">
+    <div class="progress-head">
+      <p id="stepCounter">Step 1 of 13</p>
+      <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
+    </div>
+
+    <div class="panel" id="panel">
+
+      <!-- 1. Find a doctor -->
+      <section class="step" data-step="find-doctor" aria-labelledby="t-find-doctor">
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-find-doctor" tabindex="-1">Find a doctor</h1>
+          <p class="lede">Search by name, department or language, then choose a doctor to see their profile and open slots at Riverside Demo Clinic.</p>
+        </header>
+        <div class="field">
+          <label for="docSearch">Search doctors</label>
+          <div class="search">
+            <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+            <input class="input" id="docSearch" type="search" placeholder="e.g. Varkey, skin, Malayalam" autocomplete="off" aria-describedby="docCount">
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="Filter by department" id="deptChips"></div>
+        <p class="results-meta" id="docCount" aria-live="polite"></p>
+        <div id="doctorLock" class="alert info" hidden style="margin-bottom:12px">
+          <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
+          <div><b>Booking already confirmed</b><p>Doctor selection is locked for this demo run. Use “Restart demo” at the end to book again.</p></div>
+        </div>
+        <ul class="doc-grid" id="docList"></ul>
+      </section>
+
+      <!-- 2. Doctor profile -->
+      <section class="step" data-step="doctor-profile" aria-labelledby="t-doctor-profile" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-doctor-profile" tabindex="-1">Doctor profile</h1>
+          <p class="lede">Review the doctor’s details before choosing a time.</p>
+        </header>
+        <div id="profileBox"></div>
+      </section>
+
+      <!-- 3. Date & slot -->
+      <section class="step" data-step="date-slot" aria-labelledby="t-date-slot" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-date-slot" tabindex="-1">Select date &amp; time</h1>
+          <p class="lede" id="slotLede">Choose a day and an open time. Your slot is held for 5 minutes while you complete the booking.</p>
+        </header>
+        <div id="slotError" class="alert error" role="alert" hidden style="margin-bottom:16px"></div>
+        <div id="slotLock" class="alert info" hidden style="margin-bottom:16px">
+          <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
+          <div><b>Booking already confirmed</b><p>The time below is booked. Changing it is disabled in this demo.</p></div>
+        </div>
+        <h2 class="section-title" id="dateTitle">Choose a date</h2>
+        <p class="hint" style="margin:-4px 0 10px">Dates and times are shown in India Standard Time (IST · Asia/Kolkata).</p>
+        <div class="date-strip" id="dateStrip" role="group" aria-labelledby="dateTitle"></div>
+        <div id="slotGroups"></div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="sw"></i>Available</span>
+          <span><i class="sw sel"></i>Selected</span>
+          <span><i class="sw bk"></i>Booked / unavailable (struck through)</span>
+        </div>
+        <div class="hold">
+          <div id="holdStatus" aria-live="polite" aria-atomic="true"></div>
+          <p class="hint" id="holdTimerRow" hidden style="margin-top:6px">Hold expires in <span class="timer" id="holdTimer">5:00</span></p>
+        </div>
+        <div class="sim-box">
+          <p class="tag">Demo control</p>
+          <div class="switch">
+            <input type="checkbox" role="switch" id="simConflict" aria-describedby="simHelp">
+            <label for="simConflict">Simulate another patient booking this slot</label>
+            <span class="switch-state" id="simState" aria-hidden="true">Off</span>
+          </div>
+          <p class="hint" id="simHelp">When on, the final confirmation fails as if someone else booked the same time a moment earlier.</p>
+        </div>
+      </section>
+
+      <!-- 4. Patient details -->
+      <section class="step" data-step="patient-details" aria-labelledby="t-patient-details" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-patient-details" tabindex="-1">Patient details</h1>
+          <p class="lede">We use these details to register the visit. Fields marked optional can be left blank.</p>
+        </header>
+        <div id="returnBox" class="alert info" hidden style="margin-bottom:16px">
+          <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+          <div><b>Updating communication preferences</b><p>Change the WhatsApp consent below, then return to the sharing step.</p>
+            <div class="btn-row" style="margin-top:8px"><button type="button" class="btn btn-primary" data-action="return-wa">Save and return to WhatsApp step <svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button></div>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-bottom:16px">
+          <button type="button" class="btn" data-action="fill-sample"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>Fill sample details</button>
+          <span class="hint">Fills in “Priya Demo-Patient” (fictional).</span>
+        </div>
+        <div id="formSummary" class="alert error" role="alert" hidden style="margin-bottom:16px" tabindex="-1"></div>
+        <form id="patientForm" novalidate>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="pName">Full name</label>
+              <input class="input" id="pName" name="name" autocomplete="name" aria-describedby="pName-err" required>
+              <p class="field-error" id="pName-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="pDob">Date of birth</label>
+              <input class="input" id="pDob" name="dob" type="date" autocomplete="bday" aria-describedby="pDob-err" required>
+              <p class="field-error" id="pDob-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="pGender">Gender</label>
+              <select class="input" id="pGender" name="gender" aria-describedby="pGender-err" required>
+                <option value="">Select…</option>
+                <option>Female</option><option>Male</option><option>Other</option><option>Prefer not to say</option>
+              </select>
+              <p class="field-error" id="pGender-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="pMobile">Mobile number</label>
+              <div class="prefix-input">
+                <span class="prefix" aria-hidden="true">+91</span>
+                <input class="input" id="pMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" aria-describedby="pMobile-hint pMobile-err" required>
+              </div>
+              <p class="hint" id="pMobile-hint">India (+91), 10 digits</p>
+              <p class="field-error" id="pMobile-err" hidden></p>
+            </div>
+            <div class="field">
+              <label for="pEmail">Email <span class="opt">(optional)</span></label>
+              <input class="input" id="pEmail" name="email" type="email" autocomplete="email" aria-describedby="pEmail-err">
+              <p class="field-error" id="pEmail-err" hidden></p>
+            </div>
+            <div class="field full">
+              <label for="pReason">Reason for visit</label>
+              <textarea class="input" id="pReason" name="reason" rows="3" aria-describedby="pReason-hint pReason-err" required></textarea>
+              <p class="hint" id="pReason-hint">A few words is enough, e.g. “Fever for 2 days”.</p>
+              <p class="field-error" id="pReason-err" hidden></p>
+            </div>
+            <div class="field full">
+              <label for="pAllergies">Known allergies <span class="opt">(optional)</span></label>
+              <input class="input" id="pAllergies" name="allergies" aria-describedby="pAllergies-hint">
+              <p class="hint" id="pAllergies-hint">Medicines, foods or other. Leave blank if none known.</p>
+            </div>
+            <fieldset class="full">
+              <legend>Communication preferences</legend>
+              <div class="check">
+                <input type="checkbox" id="cSms" name="sms" checked>
+                <label for="cSms">Send me appointment updates by SMS<span class="hint">Confirmations, reminders and secure links. No medical details in messages.</span></label>
+              </div>
+              <div class="check">
+                <input type="checkbox" id="cWa" name="wa">
+                <label for="cWa">Send me updates on WhatsApp<span class="hint">Optional. Off unless you choose to opt in. You can opt out at any time.</span></label>
+              </div>
+            </fieldset>
+          </div>
+        </form>
+      </section>
+
+      <!-- 5. Confirm -->
+      <section class="step" data-step="confirm" aria-labelledby="t-confirm" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-confirm" tabindex="-1">Confirm appointment</h1>
+          <p class="lede">Check everything below, then confirm. Your slot stays held until the timer runs out.</p>
+        </header>
+        <div id="reviewCard"></div>
+        <div id="confirmStatus" aria-live="polite" style="margin-top:16px"></div>
+      </section>
+
+      <!-- 6. Confirmed -->
+      <section class="step" data-step="confirmed" aria-labelledby="t-confirmed" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-confirmed" tabindex="-1">Appointment confirmed</h1>
+        </header>
+        <div id="confirmedBox"></div>
+      </section>
+
+      <!-- 7. Consultation -->
+      <section class="step" data-step="consultation" aria-labelledby="t-consultation" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-consultation" tabindex="-1">Consultation</h1>
+          <p class="lede">The doctor’s workspace. Notes below are fictional sample text — edit freely.</p>
+        </header>
+        <h2 class="sr-only">Today’s OPD queue</h2>
+        <div class="stats" id="queueStats"></div>
+        <div id="patientCard"></div>
+        <h2 class="section-title">Clinical notes (SOAP)</h2>
+        <div class="soap">
+          <div class="field"><label for="soapS"><span class="soap-letter" aria-hidden="true">S</span>Subjective</label><textarea class="input" id="soapS" data-soap="s" rows="3"></textarea></div>
+          <div class="field"><label for="soapO"><span class="soap-letter" aria-hidden="true">O</span>Objective</label><textarea class="input" id="soapO" data-soap="o" rows="2"></textarea></div>
+          <div class="field"><label for="soapA"><span class="soap-letter" aria-hidden="true">A</span>Assessment</label><textarea class="input" id="soapA" data-soap="a" rows="2"></textarea></div>
+          <div class="field"><label for="soapP"><span class="soap-letter" aria-hidden="true">P</span>Plan</label><textarea class="input" id="soapP" data-soap="p" rows="3"></textarea></div>
+        </div>
+      </section>
+
+      <!-- 8. Vitals -->
+      <section class="step" data-step="vitals" aria-labelledby="t-vitals" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-vitals" tabindex="-1">Vitals</h1>
+          <p class="lede">Record today’s measurements. Values outside plausible limits are flagged so typing errors are caught early.</p>
+        </header>
+        <div class="vitals-layout">
+          <form id="vitalsForm" novalidate>
+            <div class="vgrid">
+              <div class="field">
+                <label for="vHr">Heart rate</label>
+                <div class="unit-input"><input class="input" id="vHr" data-vital="hr" inputmode="numeric" aria-describedby="vHr-err"><span class="unit" aria-hidden="true">bpm</span></div>
+                <p class="field-error" id="vHr-err" hidden></p>
+              </div>
+              <div class="field">
+                <span class="label" id="bpLabel">Blood pressure <span class="opt">(mmHg)</span></span>
+                <div class="bp-pair">
+                  <input class="input" id="vSys" data-vital="sys" inputmode="numeric" aria-labelledby="bpLabel vSysL" aria-describedby="vBp-err">
+                  <span class="sep" aria-hidden="true">/</span>
+                  <input class="input" id="vDia" data-vital="dia" inputmode="numeric" aria-labelledby="bpLabel vDiaL" aria-describedby="vBp-err">
+                </div>
+                <span class="sr-only" id="vSysL">systolic</span><span class="sr-only" id="vDiaL">diastolic</span>
+                <p class="hint">Systolic / diastolic</p>
+                <p class="field-error" id="vBp-err" hidden></p>
+              </div>
+              <div class="field">
+                <label for="vTemp">Temperature</label>
+                <div class="unit-input"><input class="input" id="vTemp" data-vital="temp" inputmode="decimal" aria-describedby="vTemp-err"><span class="unit" aria-hidden="true">°C</span></div>
+                <p class="field-error" id="vTemp-err" hidden></p>
+              </div>
+              <div class="field">
+                <label for="vSpo2">SpO₂</label>
+                <div class="unit-input"><input class="input" id="vSpo2" data-vital="spo2" inputmode="numeric" aria-describedby="vSpo2-err"><span class="unit" aria-hidden="true">%</span></div>
+                <p class="field-error" id="vSpo2-err" hidden></p>
+              </div>
+              <div class="field">
+                <label for="vHeight">Height</label>
+                <div class="unit-input"><input class="input" id="vHeight" data-vital="height" inputmode="decimal" aria-describedby="vHeight-err"><span class="unit" aria-hidden="true">cm</span></div>
+                <p class="field-error" id="vHeight-err" hidden></p>
+              </div>
+              <div class="field">
+                <label for="vWeight">Weight</label>
+                <div class="unit-input"><input class="input" id="vWeight" data-vital="weight" inputmode="decimal" aria-describedby="vWeight-err"><span class="unit" aria-hidden="true">kg</span></div>
+                <p class="field-error" id="vWeight-err" hidden></p>
+              </div>
+              <div class="field">
+                <span class="label" id="bmiLabel">BMI <span class="opt">(auto)</span></span>
+                <output class="bmi-out" id="bmiOut" aria-labelledby="bmiLabel" for="vHeight vWeight">—</output>
+                <p class="hint">Weight ÷ height² (kg/m²)</p>
+              </div>
+            </div>
+          </form>
+
+          <div class="hr-card" id="hrCard">
+            <h2><svg class="icon heart" aria-hidden="true"><use href="#i-heart"/></svg>Heart Rate</h2>
+            <div>
+              <p class="hr-value" id="hrValue">72 <small>bpm</small></p>
+              <p class="hr-src" id="hrSrc">72 bpm · Source: Demo Device</p>
+            </div>
+            <svg class="ecg" viewBox="0 0 260 40" aria-hidden="true" focusable="false"><path d="M0 22h40l6-10 6 20 8-30 8 36 6-16h40l6-10 6 20 8-30 8 36 6-16h40l6-8 6 12h34" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+            <div id="hrStatus" aria-live="polite"></div>
+            <button type="button" class="btn btn-primary" id="readDevice" data-action="read-device"><svg class="icon" aria-hidden="true"><use href="#i-device"/></svg>Read from demo device</button>
+            <button type="button" class="btn btn-ghost" data-action="try-108">Demo: enter 108 bpm</button>
+            <fieldset>
+              <legend class="small">Reference range (configurable)</legend>
+              <div class="range-row">
+                <div class="field"><label for="rMin" class="small">Low (bpm)</label><input class="input" id="rMin" inputmode="numeric" value="60" aria-describedby="range-err"></div>
+                <div class="field"><label for="rMax" class="small">High (bpm)</label><input class="input" id="rMax" inputmode="numeric" value="100" aria-describedby="range-err"></div>
+              </div>
+              <p class="field-error" id="range-err" hidden style="margin-top:8px"></p>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. Prescription -->
+      <section class="step" data-step="prescription" aria-labelledby="t-prescription" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-prescription" tabindex="-1">Prescription</h1>
+          <p class="lede">Build the prescription. It stays a draft until you finalize it.</p>
+        </header>
+        <div class="rx-toolbar">
+          <span id="rxBadge" class="badge draft"></span>
+          <span class="hint mono" id="rxNumberLabel"></span>
+        </div>
+        <div id="rxFinalNote" class="alert success" hidden style="margin-bottom:14px">
+          <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
+          <div><b>Finalized and read-only</b><p>To make a change, create an amended version. The finalized version stays on record.</p>
+            <div class="btn-row" style="margin-top:8px"><button type="button" class="btn" data-action="amend"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>Create amended version</button></div>
+          </div>
+        </div>
+        <div id="rxError" class="alert error" role="alert" hidden style="margin-bottom:14px"></div>
+        <h2 class="section-title">Medicines</h2>
+        <ol class="med-list" id="medList"></ol>
+        <div class="btn-row" style="margin-top:12px"><button type="button" class="btn" id="addMed" data-action="add-med"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Add medicine</button></div>
+        <div class="form-grid" style="margin-top:20px">
+          <div class="field full"><label for="rxAdvice">Advice</label><textarea class="input rx-lockable" id="rxAdvice" rows="3"></textarea></div>
+          <div class="field"><label for="rxInv">Investigations <span class="opt">(optional)</span></label><textarea class="input rx-lockable" id="rxInv" rows="2"></textarea></div>
+          <div class="field"><label for="rxFollow">Follow-up date</label><input class="input rx-lockable" id="rxFollow" type="date" aria-describedby="rxFollow-hint"><p class="hint" id="rxFollow-hint">Shown on the prescription and in reminders.</p></div>
+        </div>
+      </section>
+
+      <!-- 10. Prescription ready -->
+      <section class="step" data-step="prescription-ready" aria-labelledby="t-prescription-ready" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-prescription-ready" tabindex="-1">Prescription ready</h1>
+          <p class="lede">Preview of the finalized prescription as the patient will see it in the portal.</p>
+        </header>
+        <div class="btn-row no-print" style="margin-bottom:16px">
+          <button type="button" class="btn btn-primary" data-action="print"><svg class="icon" aria-hidden="true"><use href="#i-print"/></svg>Print</button>
+          <span class="hint">Prints the prescription only.</span>
+        </div>
+        <article class="rx-paper" id="rxPrint" aria-label="Prescription preview"></article>
+      </section>
+
+      <!-- 11. Send SMS -->
+      <section class="step" data-step="send-sms" aria-labelledby="t-send-sms" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-send-sms" tabindex="-1">Send via SMS</h1>
+          <p class="lede">The SMS carries only a secure link — never medicine names or clinical details.</p>
+        </header>
+        <div id="smsBox"></div>
+      </section>
+
+      <!-- 12. Send WhatsApp -->
+      <section class="step" data-step="send-whatsapp" aria-labelledby="t-send-whatsapp" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-send-whatsapp" tabindex="-1">Send via WhatsApp</h1>
+          <p class="lede">WhatsApp messages are sent only to patients who explicitly opted in, using a pre-approved utility template.</p>
+        </header>
+        <div id="waBox"></div>
+      </section>
+
+      <!-- 13. Complete -->
+      <section class="step" data-step="complete" aria-labelledby="t-complete" hidden>
+        <header class="step-head">
+          <p class="eyebrow"></p>
+          <h1 id="t-complete" tabindex="-1">Journey complete</h1>
+        </header>
+        <div id="completeBox"></div>
+      </section>
+    </div>
+
+    <nav class="step-nav" aria-label="Step navigation">
+      <button type="button" class="btn" id="backBtn"><svg class="icon" aria-hidden="true"><use href="#i-left"/></svg>Back</button>
+      <p class="nav-hint" id="navHint" aria-live="polite"></p>
+      <button type="button" class="btn btn-primary" id="nextBtn"><span id="nextLabel">Next</span><svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button>
+    </nav>
+  </main>
+
+  <aside class="rail" aria-label="Journey progress and message preview">
+    <details class="card journey" id="journey" open>
+      <summary><span>Journey</span><svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></summary>
+      <nav class="journey-body" aria-label="Journey steps" id="stepList"></nav>
+    </details>
+    <section class="card phone-card" aria-labelledby="phoneTitle">
+      <h2 id="phoneTitle"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Patient’s phone</h2>
+      <p class="hint">Messages the patient receives during this demo.</p>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-top"><span class="ava" aria-hidden="true" id="inboxAva">PD</span><div><b id="inboxName">Patient</b><span id="inboxNum">+91 ••••• •••••</span></div></div>
+          <div class="phone-body"><ul class="inbox" id="inbox"></ul></div>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p class="disc"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>This application supports healthcare workflows. It does not replace professional medical evaluation. For severe or emergency symptoms, contact local emergency medical services (112 in India) or seek immediate in-person care.</span></p>
+    <p class="muted small"><span data-app-name></span> · Interactive product demo · Fictional data only · Nothing you enter leaves this page</p>
+  </div>
+</footer>
+
+<div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+<dialog id="finalizeDialog" aria-labelledby="dlgTitle" aria-describedby="dlgDesc">
+  <div class="dlg-body">
+    <h2 id="dlgTitle"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>Finalize prescription?</h2>
+    <div id="dlgDesc">
+      <p>Once finalized, this prescription becomes <strong>read-only</strong> and is made available to the patient.</p>
+      <ul>
+        <li>Any later change creates a new <strong>amended version</strong> linked to this one.</li>
+        <li>The finalized original remains on record and is never overwritten.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="dlg-actions">
+    <button type="button" class="btn" data-action="dlg-cancel">Cancel</button>
+    <button type="button" class="btn btn-primary" data-action="dlg-finalize"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Finalize prescription</button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+const APP_NAME = '[APP_NAME]';
+
+/* ================= Static demo data (all fictional) ================= */
+const CLINIC = { name: 'Riverside Demo Clinic', address: '12 Demo Riverside Road, Kochi 682001 (fictional)', phone: '+91 00000 00000', block: 'OPD Block B' };
+const DEPARTMENTS = ['General Medicine', 'Paediatrics', 'Cardiology', 'Dermatology', 'Orthopaedics', 'ENT'];
+const DOCTORS = [
+  { id: 'd1', name: 'Dr. Asha Varkey', initials: 'AV', qual: 'MBBS, MD (General Medicine)', dept: 'General Medicine', exp: 14, langs: ['English', 'Malayalam', 'Hindi'], fee: 500, reg: 'DEMO-REG-10001', room: 'Room 4', days: [1, 2, 3, 4, 5, 6], about: 'Fictional demo profile. Adult primary care, preventive check-ups and long-term follow-up of common conditions.' },
+  { id: 'd2', name: 'Dr. Rohan Mehtani', initials: 'RM', qual: 'MBBS, MD (Paediatrics)', dept: 'Paediatrics', exp: 9, langs: ['English', 'Hindi', 'Marathi'], fee: 600, reg: 'DEMO-REG-10002', room: 'Room 7', days: [1, 2, 3, 4, 5], about: 'Fictional demo profile. Child health, growth monitoring and routine immunisation visits.' },
+  { id: 'd3', name: 'Dr. Farah Siddiqui', initials: 'FS', qual: 'MBBS, MD, DM (Cardiology)', dept: 'Cardiology', exp: 18, langs: ['English', 'Hindi', 'Urdu'], fee: 1200, reg: 'DEMO-REG-10003', room: 'Room 11', days: [1, 3, 5, 6], about: 'Fictional demo profile. Outpatient cardiology consultations and review of test reports.' },
+  { id: 'd4', name: 'Dr. Neel Banerjee', initials: 'NB', qual: 'MBBS, MD (Dermatology)', dept: 'Dermatology', exp: 7, langs: ['English', 'Bengali', 'Hindi'], fee: 800, reg: 'DEMO-REG-10004', room: 'Room 9', days: [2, 3, 4, 5, 6], about: 'Fictional demo profile. Skin, hair and nail consultations for adults and children.' },
+  { id: 'd5', name: 'Dr. Kavya Raghunath', initials: 'KR', qual: 'MBBS, MS (Orthopaedics)', dept: 'Orthopaedics', exp: 11, langs: ['English', 'Kannada', 'Tamil'], fee: 900, reg: 'DEMO-REG-10005', room: 'Room 2', days: [1, 2, 4, 5, 6], about: 'Fictional demo profile. Joint, bone and sports-related consultations.' },
+  { id: 'd6', name: 'Dr. Thomas Mathai', initials: 'TM', qual: 'MBBS, MS (ENT)', dept: 'ENT', exp: 12, langs: ['English', 'Malayalam'], fee: 700, reg: 'DEMO-REG-10006', room: 'Room 5', days: [1, 2, 3, 4, 6], about: 'Fictional demo profile. Ear, nose and throat consultations.' }
+];
+const SLOT_TIMES = { Morning: ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30'], Evening: ['16:00', '16:30', '17:00', '17:30', '18:00', '18:30'] };
+const STEPS = [
+  { id: 'find-doctor', title: 'Find a doctor', group: 0 },
+  { id: 'doctor-profile', title: 'Doctor profile', group: 0 },
+  { id: 'date-slot', title: 'Date & time slot', group: 0 },
+  { id: 'patient-details', title: 'Patient details', group: 0 },
+  { id: 'confirm', title: 'Confirm appointment', group: 0 },
+  { id: 'confirmed', title: 'Appointment confirmed', group: 0 },
+  { id: 'consultation', title: 'Doctor consultation', group: 1 },
+  { id: 'vitals', title: 'Vitals', group: 1 },
+  { id: 'prescription', title: 'Prescription', group: 1 },
+  { id: 'prescription-ready', title: 'Prescription ready', group: 1 },
+  { id: 'send-sms', title: 'Send via SMS', group: 2 },
+  { id: 'send-whatsapp', title: 'Send via WhatsApp', group: 2 },
+  { id: 'complete', title: 'Journey complete', group: 2 }
+];
+const GROUPS = ['Patient booking', 'Consultation · doctor view', 'Share with patient'];
+const CONFLICT_MSG = 'This slot was just booked by another patient. Please select another available time.';
+const HR_REVIEW_MSG = 'This measurement is outside the configured reference range. Please review the result with a qualified healthcare professional.';
+const SECURE_LINK = 'https://example.test/s/••••••';
+const HOLD_MS = 5 * 60 * 1000;
+const SAMPLE_PATIENT = { name: 'Priya Demo-Patient', dob: '1992-04-18', gender: 'Female', mobile: '9000000001', email: 'priya.demo@example.test', reason: 'Fever and body ache for 2 days', allergies: 'No known drug allergies' };
+const SAMPLE_SOAP = {
+  s: 'Reports fever and body ache for 2 days. Appetite reduced, sleeping normally. No recent travel. (Fictional sample text.)',
+  o: 'Alert, comfortable at rest. Vitals recorded in the next step. (Fictional sample text.)',
+  a: 'Sample assessment: likely self-limiting viral illness. (Fictional demo entry — not a clinical opinion.)',
+  p: 'Symptomatic care, oral fluids and rest. Review if symptoms persist beyond 3 days. (Fictional sample text.)'
+};
+const VITAL_RULES = {
+  hr: { label: 'Heart rate', min: 25, max: 250, unit: 'bpm', int: true },
+  sys: { label: 'Systolic pressure', min: 50, max: 260, unit: 'mmHg', int: true },
+  dia: { label: 'Diastolic pressure', min: 30, max: 160, unit: 'mmHg', int: true },
+  temp: { label: 'Temperature', min: 30, max: 44, unit: '°C' },
+  spo2: { label: 'SpO₂', min: 50, max: 100, unit: '%', int: true },
+  height: { label: 'Height', min: 40, max: 250, unit: 'cm' },
+  weight: { label: 'Weight', min: 1, max: 300, unit: 'kg' }
+};
+const ROUTES = ['Oral', 'Topical', 'Inhalation', 'Nasal', 'Eye drops', 'Ear drops', 'Sublingual', 'Injection'];
+const FREQS = ['Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 'At bedtime', 'As needed (SOS)'];
+const TIMINGS = ['After food', 'Before food', 'With food', 'Empty stomach', 'Any time'];
+
+/* ================= Helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function icon(name, cls = '') { return `<svg class="icon ${cls}" aria-hidden="true" focusable="false"><use href="#i-${name}"/></svg>`; }
+function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function announce(msg) { const l = $('#live'); l.textContent = ''; setTimeout(() => { l.textContent = msg; }, 30); }
+function rupees(n) { return '₹' + n.toLocaleString('en-IN'); }
+
+/* ---- Dates in Asia/Kolkata ---- */
+function istNow() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const p = {}; parts.forEach(x => { p[x.type] = x.value; });
+  return { y: +p.year, m: +p.month, d: +p.day, mins: (+p.hour % 24) * 60 + (+p.minute) };
+}
+function dayKey(offset) { const n = istNow(); return new Date(Date.UTC(n.y, n.m - 1, n.d + offset, 12)).toISOString().slice(0, 10); }
+function keyToDate(key) { const [y, m, d] = key.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d, 12)); }
+function fmtKey(key, opts) { return new Intl.DateTimeFormat('en-IN', Object.assign({ timeZone: 'UTC' }, opts)).format(keyToDate(key)); }
+function fmtLong(key) { return fmtKey(key, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+function fmtTime(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(m).padStart(2, '0')} ${ap}`; }
+function clockNow() { return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(new Date()).toUpperCase(); }
+function relDay(key) { if (key === dayKey(0)) return 'Today'; if (key === dayKey(1)) return 'Tomorrow'; return fmtKey(key, { weekday: 'short', day: 'numeric', month: 'short' }); }
+function ageFrom(dob) { if (!dob) return ''; const n = istNow(); const [y, m, d] = dob.split('-').map(Number); let a = n.y - y; if (n.m < m || (n.m === m && n.d < d)) a--; return a; }
+
+/* ================= State (in memory only) ================= */
+let apptSeq = 123;
+let state;
+let current = 0, maxReached = 0, busy = false, holdTimerId = null;
+function freshState() {
+  return {
+    query: '', dept: 'All', doctorId: null, dateKey: null, hold: null, checking: null,
+    simulateConflict: false, slotError: '', extraBooked: new Set(),
+    patient: null, consent: { sms: true, wa: false }, booked: false, appointmentId: null, uhid: 'DHN-00000001', returnTo: null,
+    soap: Object.assign({}, SAMPLE_SOAP),
+    vitals: { hr: '72', sys: '118', dia: '76', temp: '36.8', spo2: '98', height: '162', weight: '58' },
+    hrSource: 'Demo Device', range: { min: 60, max: 100 }, reading: false,
+    meds: [newMed({ name: 'Paracetamol', strength: '500 mg', dose: '1 tablet', route: 'Oral', freq: 'Twice daily', timing: 'After food', duration: '5 days', instr: 'Sample instruction: take with a glass of water.' })],
+    advice: 'Drink plenty of fluids and rest. (Fictional sample advice.)',
+    investigations: 'Complete blood count — only if fever continues beyond 3 days (sample).',
+    followUp: dayKey(7),
+    rx: { finalized: false, version: 1, finalizedAt: null },
+    sms: { status: -1, times: [] }, wa: { status: -1, times: [] },
+    messages: []
+  };
+}
+let medSeq = 0;
+function newMed(v = {}) { return Object.assign({ id: 'm' + (++medSeq), name: '', strength: '', dose: '', route: 'Oral', freq: 'Twice daily', timing: 'After food', duration: '', instr: '' }, v); }
+const doctor = () => DOCTORS.find(d => d.id === state.doctorId) || DOCTORS[0];
+const patient = () => state.patient || SAMPLE_PATIENT;
+const rxNumber = () => `RX-${istNow().y}-000457` + (state.rx.version > 1 ? `-A${state.rx.version - 1}` : '');
+
+/* ================= Slots ================= */
+function worksOn(doc, key) { return doc.days.includes(keyToDate(key).getUTCDay()); }
+function slotState(doc, key, t) {
+  if (!worksOn(doc, key)) return 'off';
+  if (key === dayKey(0)) { const [h, m] = t.split(':').map(Number); if (h * 60 + m <= istNow().mins + 20) return 'past'; }
+  const id = `${doc.id}|${key}|${t}`;
+  if (state.extraBooked.has(id)) return 'booked';
+  if (hash(id) % 10 < 3) return 'booked';
+  return 'free';
+}
+function freeSlots(doc, key) { return Object.values(SLOT_TIMES).flat().filter(t => slotState(doc, key, t) === 'free'); }
+function nextAvailable(doc) {
+  for (let i = 0; i < 7; i++) { const k = dayKey(i); const f = freeSlots(doc, k); if (f.length) return { key: k, time: f[0] }; }
+  return null;
+}
+function holdValid() { return state.hold && state.hold.expires > Date.now(); }
+
+/* ================= Rendering: shell ================= */
+function renderAppName() { $$('[data-app-name]').forEach(n => { n.textContent = APP_NAME; }); document.title = `${APP_NAME} — Clinic journey demo`; }
+
+function renderStepList() {
+  let html = '';
+  GROUPS.forEach((g, gi) => {
+    const items = STEPS.map((s, i) => ({ s, i })).filter(x => x.s.group === gi);
+    html += `<h3>${esc(g)}</h3><ol start="${items[0].i + 1}">`;
+    items.forEach(({ s, i }) => {
+      const isCur = i === current, done = i < maxReached || (i < current), locked = i > maxReached;
+      html += `<li class="${done && !isCur ? 'done' : ''}"><button type="button" data-goto="${i}" ${isCur ? 'aria-current="step"' : ''} ${locked ? 'disabled' : ''}>
+        <span class="jdot" aria-hidden="true">${done && !isCur ? icon('check', 'sm') : i + 1}</span>
+        <span>${esc(s.title)}<span class="sr-only">${isCur ? ' (current step)' : done ? ' (completed)' : locked ? ' (not yet available)' : ''}</span></span></button></li>`;
+    });
+    html += '</ol>';
+  });
+  $('#stepList').innerHTML = html;
+}
+
+function updateChrome() {
+  const s = STEPS[current];
+  const doctorMode = s.group === 1 || (s.group === 2 && s.id !== 'complete');
+  document.body.dataset.mode = doctorMode ? 'doctor' : 'patient';
+  $('#modeText').textContent = doctorMode ? `Doctor view · ${doctor().name}` : 'Patient view';
+  $('#modePill use').setAttribute('href', doctorMode ? '#i-steth' : '#i-user');
+  $('#stepCounter').textContent = `Step ${current + 1} of ${STEPS.length} · ${s.title}`;
+  $('#progressBar').style.width = `${((current + 1) / STEPS.length) * 100}%`;
+  const sec = $(`[data-step="${s.id}"]`);
+  const eb = sec.querySelector('.eyebrow');
+  eb.innerHTML = `${icon(doctorMode ? 'steth' : 'user', 'sm')}${doctorMode ? 'Doctor' : 'Patient'} · Step ${current + 1}`;
+  $('#backBtn').hidden = current === 0;
+  $('#nextBtn').hidden = s.id === 'complete';
+  let label = 'Next';
+  if (s.id === 'confirm' && !state.booked) label = 'Confirm booking';
+  if (s.id === 'prescription' && !state.rx.finalized) label = 'Finalize prescription';
+  if (s.id === 'consultation') label = 'Record vitals';
+  $('#nextLabel').textContent = label;
+  $('#nextBtn').disabled = busy; $('#backBtn').disabled = busy;
+  renderStepList();
+}
+function setHint(msg, warn) { const h = $('#navHint'); h.textContent = msg || ''; h.classList.toggle('warn', !!warn); }
+
+function goTo(i, opts = {}) {
+  if (i < 0 || i >= STEPS.length) return;
+  const prev = STEPS[current];
+  if (prev && prev.id === 'patient-details' && i !== current) readPatientForm();
+  $$('.step').forEach(sec => { sec.hidden = true; });
+  current = i; maxReached = Math.max(maxReached, i);
+  const s = STEPS[i];
+  const sec = $(`[data-step="${s.id}"]`);
+  sec.hidden = false;
+  sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = '';
+  setHint('');
+  (RENDER[s.id] || (() => {}))();
+  updateChrome();
+  if (opts.focus !== false) {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    sec.querySelector('h1').focus({ preventScroll: true });
+    announce(`Step ${i + 1} of ${STEPS.length}: ${s.title}`);
+  }
+}
+
+/* ================= Step 1: Find doctor ================= */
+function renderChips() {
+  $('#deptChips').innerHTML = ['All', ...DEPARTMENTS].map(d =>
+    `<button type="button" class="chip" data-dept="${esc(d)}" aria-pressed="${state.dept === d}">${icon('check', 'sm')}${esc(d)}</button>`).join('');
+}
+function renderDoctors() {
+  const q = state.query.trim().toLowerCase();
+  const list = DOCTORS.filter(d => (state.dept === 'All' || d.dept === state.dept) &&
+    (!q || [d.name, d.dept, d.qual, ...d.langs].join(' ').toLowerCase().includes(q)));
+  $('#docCount').textContent = `${list.length} doctor${list.length === 1 ? '' : 's'} found${state.dept !== 'All' ? ' in ' + state.dept : ''}`;
+  $('#doctorLock').hidden = !state.booked;
+  if (!list.length) { $('#docList').innerHTML = `<li class="no-results">${icon('search')}<p style="margin-top:8px">No doctors match “${esc(state.query)}”. Try another name or department.</p></li>`; return; }
+  $('#docList').innerHTML = list.map(d => {
+    const na = nextAvailable(d); const sel = d.id === state.doctorId;
+    return `<li class="doc-card ${sel ? 'selected' : ''}">
+      <div class="doc-top"><span class="avatar" aria-hidden="true">${d.initials}</span>
+        <div><h2 class="doc-name" id="dn-${d.id}">${esc(d.name)}</h2><p class="qual">${esc(d.qual)}</p></div></div>
+      <dl class="facts">
+        <dt>Specialty</dt><dd>${esc(d.dept)}</dd>
+        <dt>Experience</dt><dd>${d.exp} years</dd>
+        <dt>Languages</dt><dd>${esc(d.langs.join(', '))}</dd>
+        <dt>Fee</dt><dd>${rupees(d.fee)}</dd>
+      </dl>
+      <p class="next-slot">${icon('clock', 'sm')}<span>Next available: <strong>${na ? `${relDay(na.key)}, ${fmtTime(na.time)}` : 'No slots this week'}</strong></span></p>
+      <button type="button" class="btn ${sel ? 'btn-primary' : ''} btn-block" data-action="select-doctor" data-id="${d.id}" aria-describedby="dn-${d.id}" ${state.booked ? 'disabled' : ''}>
+        ${sel ? icon('check') + 'Selected — view profile' : 'Select doctor'}</button>
+    </li>`;
+  }).join('');
+}
+
+/* ================= Step 2: Profile ================= */
+function renderProfile() {
+  const d = doctor(); const na = nextAvailable(d);
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  $('#profileBox').innerHTML = `
+    <div class="profile">
+      <span class="avatar xl" aria-hidden="true">${d.initials}</span>
+      <div>
+        <h2>${esc(d.name)}</h2>
+        <p class="qual">${esc(d.qual)}</p>
+        <div class="tagrow"><span class="tag-s">${esc(d.dept)}</span><span class="tag-s">${d.exp} years experience</span><span class="tag-s">In-clinic consultation</span></div>
+        <p style="margin-top:12px;color:var(--text-2)">${esc(d.about)}</p>
+      </div>
+    </div>
+    <div class="kv-grid">
+      <div class="kv"><span>Consultation fee</span><b>${rupees(d.fee)}</b></div>
+      <div class="kv"><span>Languages</span><b>${esc(d.langs.join(', '))}</b></div>
+      <div class="kv"><span>OPD days</span><b>${d.days.map(x => dayNames[x]).join(', ')}</b></div>
+      <div class="kv"><span>Location</span><b>${esc(CLINIC.name)}, ${esc(CLINIC.block)}, ${esc(d.room)}</b></div>
+      <div class="kv"><span>Registration no.</span><b class="mono">${esc(d.reg)}</b></div>
+      <div class="kv"><span>Next available</span><b>${na ? `${relDay(na.key)}, ${fmtTime(na.time)}` : '—'}</b></div>
+    </div>
+    <div class="btn-row" style="margin-top:18px">
+      <button type="button" class="btn btn-ghost" data-goto="0" ${state.booked ? 'disabled' : ''}>${icon('left')}Change doctor</button>
+    </div>`;
+}
+
+/* ================= Step 3: Date & slot ================= */
+function renderDates() {
+  const d = doctor();
+  if (!state.dateKey || !worksOn(d, state.dateKey)) {
+    state.dateKey = null;
+    for (let i = 0; i < 7; i++) { const k = dayKey(i); if (freeSlots(d, k).length) { state.dateKey = k; break; } }
+    if (!state.dateKey) state.dateKey = dayKey(0);
+  }
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const k = dayKey(i); const off = !worksOn(d, k); const free = off ? 0 : freeSlots(d, k).length;
+    const sel = k === state.dateKey;
+    const lab = i === 0 ? 'Today' : i === 1 ? 'Tmrw' : fmtKey(k, { weekday: 'short' });
+    const status = off ? 'Doctor not available' : free ? `${free} open` : 'Fully booked';
+    html += `<button type="button" class="date-btn" data-date="${k}" aria-pressed="${sel}" ${off || state.booked ? 'disabled' : ''}
+      aria-label="${fmtLong(k)}${i === 0 ? ' (today)' : ''}, ${status}">
+      <span class="dw">${lab}</span><span class="dd">${fmtKey(k, { day: 'numeric' })}</span><span class="dm">${off ? 'Off' : free ? fmtKey(k, { month: 'short' }) : 'Full'}</span></button>`;
+  }
+  $('#dateStrip').innerHTML = html;
+}
+function renderSlots() {
+  const d = doctor(); const k = state.dateKey;
+  let html = `<h2 class="section-title">Available times · ${esc(fmtLong(k))}</h2>`;
+  Object.entries(SLOT_TIMES).forEach(([grp, times]) => {
+    html += `<div class="slot-group" role="group" aria-labelledby="sg-${grp}"><h3 id="sg-${grp}">${icon(grp === 'Morning' ? 'sun' : 'moon', 'sm')}${grp}</h3><div class="slots">`;
+    times.forEach(t => {
+      const st = slotState(d, k, t);
+      const isSel = state.hold && state.hold.dateKey === k && state.hold.time === t;
+      const isChecking = state.checking && state.checking.dateKey === k && state.checking.time === t;
+      const note = st === 'booked' ? `${icon('x-circle', 'sm')}Booked` : st === 'past' ? 'Unavailable' : st === 'off' ? 'Off' :
+        isChecking ? '<span class="spinner" style="width:11px;height:11px;border-width:2px"></span>Checking…' : isSel ? `${icon('check', 'sm')}Held` : 'Available';
+      const disabled = st !== 'free' || state.booked || (state.checking && !isChecking);
+      html += `<button type="button" class="slot" data-slot="${t}" aria-pressed="${!!isSel}" ${disabled ? 'disabled' : ''} aria-label="${fmtTime(t)}, ${st === 'free' ? (isSel ? 'selected and held' : 'available') : st === 'booked' ? 'booked' : 'unavailable'}">
+        <span>${fmtTime(t)}</span><small aria-hidden="true">${note}</small></button>`;
+    });
+    html += '</div></div>';
+  });
+  $('#slotGroups').innerHTML = html;
+}
+function renderHold() {
+  const box = $('#holdStatus'); const row = $('#holdTimerRow');
+  if (state.checking) {
+    box.innerHTML = `<div class="alert info"><span class="spinner" aria-hidden="true"></span><div><b>Checking availability…</b></div></div>`;
+    row.hidden = true; return;
+  }
+  if (state.booked) { box.innerHTML = ''; row.hidden = true; return; }
+  if (holdValid()) {
+    box.innerHTML = `<div class="alert success">${icon('check-circle')}<div><b>Slot reserved for 5 minutes</b><p>${esc(doctor().name)} · ${esc(fmtLong(state.hold.dateKey))} at ${fmtTime(state.hold.time)}. Continue to enter patient details.</p></div></div>`;
+    row.hidden = false; tickHold();
+  } else { box.innerHTML = ''; row.hidden = true; }
+}
+function tickHold() {
+  if (!holdValid()) return;
+  const left = Math.max(0, state.hold.expires - Date.now());
+  const txt = `${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, '0')}`;
+  $('#holdTimer').textContent = txt;
+  const ct = $('#confirmTimer'); if (ct) ct.textContent = txt;
+}
+function startHoldTimer() {
+  clearInterval(holdTimerId);
+  holdTimerId = setInterval(() => {
+    if (!state.hold || state.booked) { clearInterval(holdTimerId); return; }
+    if (!holdValid()) {
+      clearInterval(holdTimerId); state.hold = null;
+      announce('Your slot hold has expired. Please select a time again.');
+      if (STEPS[current].id === 'date-slot') { renderSlots(); renderHold(); }
+      if (STEPS[current].id === 'confirm') renderReview();
+      return;
+    }
+    tickHold();
+  }, 1000);
+}
+async function selectSlot(t) {
+  if (state.checking || state.booked) return;
+  const k = state.dateKey;
+  state.slotError = ''; $('#slotError').hidden = true;
+  state.hold = null; state.checking = { dateKey: k, time: t };
+  renderSlots(); renderHold();
+  await wait(700);
+  state.checking = null;
+  if (slotState(doctor(), k, t) !== 'free') { renderSlots(); renderHold(); return; }
+  state.hold = { dateKey: k, time: t, expires: Date.now() + HOLD_MS };
+  renderSlots(); renderHold(); startHoldTimer();
+  setHint('');
+  const btn = $(`.slot[data-slot="${t}"]`); if (btn) btn.focus();
+}
+function renderDateSlot() {
+  $('#slotLock').hidden = !state.booked;
+  const err = $('#slotError');
+  if (state.slotError) { err.innerHTML = `${icon('x-circle')}<div><b>Booking not completed</b><p>${esc(state.slotError)}</p></div>`; err.hidden = false; }
+  else err.hidden = true;
+  $('#simConflict').checked = state.simulateConflict; $('#simState').textContent = state.simulateConflict ? 'On' : 'Off';
+  renderDates(); renderSlots(); renderHold();
+}
+
+/* ================= Step 4: Patient form ================= */
+const PFIELDS = ['pName', 'pDob', 'pGender', 'pMobile', 'pEmail', 'pReason'];
+function validateField(id) {
+  const el = $('#' + id); const v = el.value.trim(); let msg = '';
+  switch (id) {
+    case 'pName': if (!v) msg = 'Enter the patient’s full name.'; else if (v.length < 2 || !/^[\p{L} .'-]+$/u.test(v)) msg = 'Use letters, spaces, full stops, apostrophes or hyphens only.'; break;
+    case 'pDob': {
+      if (!v) { msg = 'Enter the date of birth.'; break; }
+      if (v > dayKey(0)) msg = 'Date of birth cannot be in the future.';
+      else if (v < '1900-01-01') msg = 'Enter a date of birth after 1900.'; break;
+    }
+    case 'pGender': if (!v) msg = 'Select a gender option.'; break;
+    case 'pMobile': if (!v) msg = 'Enter a mobile number.'; else if (!/^[6-9]\d{9}$/.test(v)) msg = 'Enter a 10-digit Indian mobile number starting with 6, 7, 8 or 9.'; break;
+    case 'pEmail': if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) msg = 'Enter a valid email address, or leave it blank.'; break;
+    case 'pReason': if (!v) msg = 'Briefly describe the reason for the visit.'; else if (v.length < 3) msg = 'Add a little more detail (at least 3 characters).'; break;
+  }
+  setFieldError(el, $('#' + id + '-err'), msg);
+  return msg;
+}
+function setFieldError(input, errEl, msg) {
+  if (msg) { errEl.innerHTML = `${icon('x-circle')}<span>${esc(msg)}</span>`; errEl.hidden = false; input.setAttribute('aria-invalid', 'true'); }
+  else { errEl.hidden = true; errEl.innerHTML = ''; input.removeAttribute('aria-invalid'); }
+}
+function validatePatient() {
+  const errs = PFIELDS.map(id => ({ id, msg: validateField(id) })).filter(e => e.msg);
+  const sum = $('#formSummary');
+  if (errs.length) {
+    sum.innerHTML = `${icon('x-circle')}<div><b>Please fix ${errs.length} field${errs.length > 1 ? 's' : ''} to continue</b><ul style="margin:6px 0 0;padding-left:18px">${errs.map(e => `<li><a href="#${e.id}" style="color:inherit">${esc($(`label[for="${e.id}"]`).childNodes[0].textContent.trim())}: ${esc(e.msg)}</a></li>`).join('')}</ul></div>`;
+    sum.hidden = false; $('#' + errs[0].id).focus();
+    return false;
+  }
+  sum.hidden = true; return true;
+}
+function readPatientForm() {
+  const f = $('#patientForm');
+  state.patient = { name: f.name.value.trim(), dob: f.dob.value, gender: f.gender.value, mobile: f.mobile.value.trim(), email: f.email.value.trim(), reason: f.reason.value.trim(), allergies: f.allergies.value.trim() };
+  state.consent = { sms: f.sms.checked, wa: f.wa.checked };
+  renderInboxHead();
+}
+function fillSample() {
+  const f = $('#patientForm');
+  Object.entries(SAMPLE_PATIENT).forEach(([k, v]) => { f[k].value = v; });
+  PFIELDS.forEach(id => validateField(id)); $('#formSummary').hidden = true;
+  readPatientForm(); announce('Sample patient details filled in.');
+}
+function renderPatient() {
+  $('#pDob').max = dayKey(0);
+  $('#returnBox').hidden = state.returnTo !== 'send-whatsapp';
+}
+
+/* ================= Step 5: Review & confirm ================= */
+function renderReview() {
+  const d = doctor(); const p = patient(); const h = state.hold;
+  const holdMsg = state.booked ? `<div class="alert success">${icon('check-circle')}<div><b>Already confirmed</b><p>Appointment ${esc(state.appointmentId)} is booked.</p></div></div>`
+    : holdValid() ? `<p class="hint" style="margin-top:12px">${icon('clock', 'sm')} Slot hold expires in <span class="timer" id="confirmTimer"></span></p>`
+    : `<div class="alert warning" style="margin-top:12px">${icon('alert')}<div><b>Slot hold expired</b><p>Go back and select a time again.</p></div></div>`;
+  const slotTxt = h ? `${fmtLong(h.dateKey)} at ${fmtTime(h.time)} IST` : '—';
+  $('#reviewCard').innerHTML = `<div class="review">
+    <div class="review-sec"><h2>Appointment</h2><dl class="dl">
+      <dt>Doctor</dt><dd>${esc(d.name)} · ${esc(d.dept)}</dd>
+      <dt>Date &amp; time</dt><dd>${esc(slotTxt)}</dd>
+      <dt>Location</dt><dd>${esc(CLINIC.name)}, ${esc(CLINIC.block)}, ${esc(d.room)}</dd>
+      <dt>Fee</dt><dd>${rupees(d.fee)} <span class="opt">(pay at reception)</span></dd></dl></div>
+    <div class="review-sec"><h2>Patient</h2><dl class="dl">
+      <dt>Name</dt><dd>${esc(p.name)}</dd>
+      <dt>Date of birth</dt><dd>${esc(p.dob ? fmtLong(p.dob) : '—')} (${ageFrom(p.dob)} y)</dd>
+      <dt>Gender</dt><dd>${esc(p.gender)}</dd>
+      <dt>Mobile</dt><dd>+91 ${esc(p.mobile)}</dd>
+      ${p.email ? `<dt>Email</dt><dd>${esc(p.email)}</dd>` : ''}
+      <dt>Reason</dt><dd>${esc(p.reason)}</dd>
+      <dt>Allergies</dt><dd>${esc(p.allergies || 'None entered')}</dd></dl></div>
+    <div class="review-sec"><h2>Updates</h2><dl class="dl">
+      <dt>SMS</dt><dd>${state.consent.sms ? icon('check-circle', 'sm') + ' Opted in' : icon('x-circle', 'sm') + ' Not opted in'}</dd>
+      <dt>WhatsApp</dt><dd>${state.consent.wa ? icon('check-circle', 'sm') + ' Opted in' : icon('x-circle', 'sm') + ' Not opted in'}</dd></dl></div>
+  </div>${holdMsg}`;
+  $('#confirmStatus').innerHTML = '';
+  tickHold();
+}
+async function confirmBooking() {
+  if (!holdValid()) {
+    state.slotError = 'Your 5-minute hold has expired. Please select an available time again.'; state.hold = null;
+    goTo(STEPS.findIndex(s => s.id === 'date-slot')); return;
+  }
+  busy = true; updateChrome();
+  $('#confirmStatus').innerHTML = `<div class="alert info"><span class="spinner" aria-hidden="true"></span><div><b>Confirming booking…</b></div></div>`;
+  await wait(900);
+  busy = false;
+  if (state.simulateConflict) {
+    state.extraBooked.add(`${doctor().id}|${state.hold.dateKey}|${state.hold.time}`);
+    state.hold = null; clearInterval(holdTimerId);
+    state.slotError = CONFLICT_MSG;
+    goTo(STEPS.findIndex(s => s.id === 'date-slot'));
+    return;
+  }
+  clearInterval(holdTimerId);
+  state.booked = true;
+  state.appointmentId = `APT-${istNow().y}-${String(apptSeq++).padStart(6, '0')}`;
+  const txt = apptMessage();
+  if (state.consent.sms) pushMessage('SMS', txt);
+  if (state.consent.wa) pushMessage('WhatsApp', txt, 'Approved template · Utility');
+  goTo(STEPS.findIndex(s => s.id === 'confirmed'));
+}
+function apptMessage() { const h = state.hold; return `Your appointment with ${doctor().name} is confirmed for ${fmtLong(h.dateKey)} at ${fmtTime(h.time)}. Appointment ID: ${state.appointmentId}.`; }
+
+/* ================= Step 6: Confirmed ================= */
+function bubbleHTML(ch, text, opts = {}) {
+  const wa = ch === 'WhatsApp';
+  const body = esc(text).replace(esc(SECURE_LINK), `<span class="fake-link">${esc(SECURE_LINK)}</span>`);
+  return `<div class="bubble ${wa ? 'wa' : ''} ${opts.pending ? 'pending' : ''}">
+    ${opts.tpl ? `<span class="tpl">${icon('shield', 'sm')}${esc(opts.tpl)}</span><br>` : ''}${body}
+    <span class="meta"><span>${esc(opts.meta || '')}</span><span>${esc(opts.time || '')}</span></span></div>`;
+}
+function phoneHTML(ch, inner, sub) {
+  const wa = ch === 'WhatsApp';
+  return `<div class="phone" role="group" aria-label="${esc(ch)} preview on patient phone"><div class="phone-screen">
+    <div class="phone-top"><span class="ava" aria-hidden="true">${wa ? icon('chat', 'sm') : icon('sms', 'sm')}</span><div><b>${wa ? esc(CLINIC.name) : 'RVDEMO'}</b><span>${esc(sub || (wa ? 'Verified business · demo' : 'SMS sender ID · demo'))}</span></div></div>
+    <div class="phone-body ${wa ? 'chat' : ''}">${inner}</div></div></div>`;
+}
+function renderConfirmed() {
+  const d = doctor(); const h = state.hold; const txt = apptMessage();
+  const sms = state.consent.sms ? `<div><p class="label" style="margin-bottom:6px">${icon('sms', 'sm')} SMS sent</p>${phoneHTML('SMS', bubbleHTML('SMS', txt, { time: 'now', meta: 'SMS' }))}</div>`
+    : `<div class="alert warning">${icon('alert')}<div><b>SMS not sent</b><p>Patient did not opt in to SMS updates.</p></div></div>`;
+  const wa = state.consent.wa ? `<div><p class="label" style="margin-bottom:6px">${icon('chat', 'sm')} WhatsApp sent</p>${phoneHTML('WhatsApp', bubbleHTML('WhatsApp', txt, { tpl: 'Approved template · Utility', time: 'now', meta: 'Delivered' }))}</div>`
+    : `<div class="alert info">${icon('info')}<div><b>WhatsApp not sent</b><p>Patient has not opted in to WhatsApp updates.</p></div></div>`;
+  $('#confirmedBox').innerHTML = `
+    <div class="confirm-hero"><span class="ring">${icon('check', 'lg')}</span><div><h2>You’re booked</h2><p>${esc(d.name)} · ${esc(fmtLong(h.dateKey))} at ${fmtTime(h.time)} IST</p></div></div>
+    <div class="two-col">
+      <div>
+        <div class="id-box"><span>Appointment ID</span><b>${esc(state.appointmentId)}</b></div>
+        <dl class="dl" style="margin-top:16px">
+          <dt>Patient</dt><dd>${esc(patient().name)}</dd>
+          <dt>Where</dt><dd>${esc(CLINIC.name)}, ${esc(CLINIC.block)}, ${esc(d.room)}</dd>
+          <dt>Fee</dt><dd>${rupees(d.fee)} at reception</dd></dl>
+        <div class="alert info" style="margin-top:16px">${icon('queue')}<div><b>Token will be issued at check-in</b><p>Please arrive 10 minutes early and show your appointment ID at reception. Your queue token is assigned when you check in.</p></div></div>
+      </div>
+      <div class="msg-previews">${sms}${wa}</div>
+    </div>`;
+}
+
+/* ================= Step 7: Consultation ================= */
+function renderConsultation() {
+  const p = patient();
+  $('#queueStats').innerHTML = `
+    <div class="stat now"><span>Now serving</span><b>Token 21</b></div>
+    <div class="stat"><span>Next</span><b>Token 22</b></div>
+    <div class="stat"><span>Waiting</span><b>5</b></div>
+    <div class="stat"><span>Avg wait</span><b>14 min</b></div>`;
+  const initials = p.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  $('#patientCard').innerHTML = `<div class="pt-card" aria-labelledby="ptName">
+    <div class="pt-head"><span class="avatar" aria-hidden="true">${esc(initials)}</span>
+      <div><h2 id="ptName">${esc(p.name)}</h2>
+      <div class="pt-meta"><span>${ageFrom(p.dob)} y · ${esc(p.gender)}</span><span>UHID <b>${esc(state.uhid)}</b></span><span>Token <b>22</b> (next)</span><span>Appt <b>${esc(state.appointmentId || '—')}</b></span></div></div></div>
+    <div><p class="label">Intake summary</p><p style="color:var(--text-2)">Reason for visit: ${esc(p.reason)}</p></div>
+    <div>${p.allergies ? `<span class="allergy">${icon('alert', 'sm')}Allergies: ${esc(p.allergies)}</span>` : `<span class="allergy">${icon('info', 'sm')}Allergies: none entered</span>`}</div>
+  </div>`;
+  $$('[data-soap]').forEach(t => { t.value = state.soap[t.dataset.soap]; });
+}
+
+/* ================= Step 8: Vitals ================= */
+function num(v) { const s = String(v).trim(); if (!s) return null; const n = Number(s); return Number.isFinite(n) ? n : NaN; }
+function vitalMsg(key) {
+  const r = VITAL_RULES[key]; const n = num(state.vitals[key]);
+  if (n === null) return key === 'hr' ? 'Enter a heart rate, or read it from the demo device.' : '';
+  if (Number.isNaN(n)) return `${r.label}: enter a number.`;
+  if (r.int && !Number.isInteger(n)) return `${r.label}: enter a whole number.`;
+  if (n < r.min || n > r.max) return `${r.label} of ${n} ${r.unit} looks implausible. Please check — expected ${r.min}–${r.max} ${r.unit}.`;
+  return '';
+}
+function validateVital(key, show = true) {
+  let msg = vitalMsg(key);
+  if (key === 'sys' || key === 'dia') {
+    msg = vitalMsg('sys') || vitalMsg('dia');
+    const s = num(state.vitals.sys), d = num(state.vitals.dia);
+    if (!msg && s && d && s <= d) msg = 'Systolic pressure should be higher than diastolic. Please check both values.';
+    if (!msg && ((s === null) !== (d === null))) msg = 'Enter both systolic and diastolic values.';
+    if (show) { setFieldError($('#vSys'), $('#vBp-err'), msg); if (msg) $('#vDia').setAttribute('aria-invalid', 'true'); else $('#vDia').removeAttribute('aria-invalid'); }
+    return msg;
+  }
+  const id = { hr: 'vHr', temp: 'vTemp', spo2: 'vSpo2', height: 'vHeight', weight: 'vWeight' }[key];
+  if (show) setFieldError($('#' + id), $('#' + id + '-err'), msg);
+  return msg;
+}
+function validateAllVitals() {
+  const keys = ['hr', 'sys', 'temp', 'spo2', 'height', 'weight'];
+  const bad = keys.filter(k => validateVital(k));
+  const rangeBad = validateRange();
+  if (bad.length || rangeBad) { const first = bad.length ? { hr: 'vHr', sys: 'vSys', temp: 'vTemp', spo2: 'vSpo2', height: 'vHeight', weight: 'vWeight' }[bad[0]] : 'rMin'; $('#' + first).focus(); return false; }
+  return true;
+}
+function validateRange() {
+  const lo = num($('#rMin').value), hi = num($('#rMax').value);
+  let msg = '';
+  if (lo === null || hi === null || Number.isNaN(lo) || Number.isNaN(hi)) msg = 'Enter both low and high values for the reference range.';
+  else if (lo < 20 || hi > 250 || lo >= hi) msg = 'Low must be below high, within 20–250 bpm.';
+  setFieldError($('#rMin'), $('#range-err'), msg);
+  if (msg) $('#rMax').setAttribute('aria-invalid', 'true'); else { $('#rMax').removeAttribute('aria-invalid'); state.range = { min: lo, max: hi }; }
+  return msg;
+}
+function renderBMI() {
+  const h = num(state.vitals.height), w = num(state.vitals.weight);
+  const ok = h && w && !vitalMsg('height') && !vitalMsg('weight');
+  $('#bmiOut').innerHTML = ok ? `${(w / Math.pow(h / 100, 2)).toFixed(1)} <span class="opt">kg/m²</span>` : '<span class="opt">Enter height and weight</span>';
+}
+function hrEvaluation() {
+  const n = num(state.vitals.hr);
+  if (n === null || Number.isNaN(n) || vitalMsg('hr')) return { kind: 'none' };
+  if (n < state.range.min || n > state.range.max) return { kind: 'review', n };
+  return { kind: 'ok', n };
+}
+function renderHR() {
+  const ev = hrEvaluation();
+  const val = ev.kind === 'none' ? '—' : ev.n;
+  if (!state.reading) {
+    $('#hrValue').innerHTML = `${esc(val)} <small>bpm</small>`;
+    $('#hrSrc').textContent = ev.kind === 'none' ? 'No valid reading yet' : `${val} bpm · Source: ${state.hrSource}`;
+  }
+  const rng = `Reference range ${state.range.min}–${state.range.max} bpm`;
+  let html = '';
+  if (ev.kind === 'ok') html = `<p class="status ok">${icon('check-circle')}Within reference range</p><p class="hint">${rng}</p>`;
+  else if (ev.kind === 'review') html = `<div class="alert warning">${icon('alert')}<div><b>Requires review</b><p>${esc(HR_REVIEW_MSG)}</p><p class="hint" style="margin-top:4px">${rng}</p></div></div>`;
+  else html = `<p class="status review">${icon('info')}No valid reading</p>`;
+  $('#hrStatus').innerHTML = html;
+}
+function renderVitals() {
+  $$('[data-vital]').forEach(i => { i.value = state.vitals[i.dataset.vital]; });
+  $('#rMin').value = state.range.min; $('#rMax').value = state.range.max;
+  renderBMI(); renderHR();
+}
+async function readDevice() {
+  if (state.reading) return;
+  state.reading = true;
+  const card = $('#hrCard'), btn = $('#readDevice');
+  card.classList.add('reading'); btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>Reading from demo device…`;
+  $('#hrSrc').textContent = 'Connecting to Demo Device…';
+  announce('Reading heart rate from demo device.');
+  const steps = reducedMotion() ? 1 : 12;
+  for (let i = 0; i < steps; i++) {
+    await wait(reducedMotion() ? 1200 : 130);
+    if (!reducedMotion()) $('#hrValue').innerHTML = `${66 + Math.floor(Math.random() * 12)} <small>bpm</small>`;
+  }
+  state.reading = false; state.vitals.hr = '72'; state.hrSource = 'Demo Device';
+  $('#vHr').value = '72'; validateVital('hr');
+  card.classList.remove('reading'); btn.disabled = false;
+  btn.innerHTML = `${icon('device')}Read from demo device`;
+  renderHR(); announce('Demo device reading: 72 bpm.');
+}
+
+/* ================= Step 9: Prescription builder ================= */
+function medSummary(m) { return [m.name && `${m.name}${m.strength ? ' ' + m.strength : ''}`, m.dose, m.route, m.freq, m.timing, m.duration].filter(Boolean).join(' — '); }
+function opts(list, v) { return list.map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join(''); }
+function renderMeds(focusSel, fallbackSel) {
+  const ro = state.rx.finalized; const n = state.meds.length;
+  $('#medList').innerHTML = state.meds.map((m, i) => {
+    const lbl = `medicine ${i + 1}${m.name ? ' (' + m.name + ')' : ''}`;
+    const f = (key, label, cls = '', extra = '') => `<div class="field ${cls}"><label for="${m.id}-${key}">${label}</label><input class="input" id="${m.id}-${key}" data-med="${m.id}" data-key="${key}" value="${esc(m[key])}" ${ro ? 'readonly' : ''} ${extra}></div>`;
+    const s = (key, label, list) => `<div class="field"><label for="${m.id}-${key}">${label}</label><select class="input" id="${m.id}-${key}" data-med="${m.id}" data-key="${key}" ${ro ? 'disabled' : ''}>${opts(list, m[key])}</select></div>`;
+    return `<li class="med" data-mid="${m.id}"><div role="group" aria-labelledby="${m.id}-h">
+      <div class="med-head"><h3 id="${m.id}-h"><span class="med-num" aria-hidden="true">${i + 1}</span>Medicine ${i + 1}</h3>
+        <div class="med-actions">
+          <button type="button" class="btn btn-icon" data-action="med-up" data-id="${m.id}" aria-label="Move ${esc(lbl)} up" ${ro || i === 0 ? 'disabled' : ''}>${icon('up')}</button>
+          <button type="button" class="btn btn-icon" data-action="med-down" data-id="${m.id}" aria-label="Move ${esc(lbl)} down" ${ro || i === n - 1 ? 'disabled' : ''}>${icon('down')}</button>
+          <button type="button" class="btn btn-icon btn-danger" data-action="med-remove" data-id="${m.id}" aria-label="Remove ${esc(lbl)}" ${ro || n === 1 ? 'disabled' : ''}>${icon('trash')}</button>
+        </div></div>
+      <div class="med-grid">
+        ${f('name', 'Medicine name', 'w2', 'autocomplete="off"')}${f('strength', 'Strength')}${f('dose', 'Dose')}
+        ${s('route', 'Route', ROUTES)}${s('freq', 'Frequency', FREQS)}${s('timing', 'Timing', TIMINGS)}${f('duration', 'Duration')}
+        ${f('instr', 'Instructions <span class="opt">(optional)</span>', 'full')}
+      </div>
+      <p class="med-summary" id="${m.id}-sum">${esc(medSummary(m) || 'Enter a medicine name to see the summary')}</p>
+    </div></li>`;
+  }).join('');
+  if (focusSel) {
+    let el = $(focusSel);
+    if ((!el || el.disabled) && fallbackSel) el = $(fallbackSel);
+    if (!el || el.disabled) el = $('#addMed');
+    el.focus();
+  }
+}
+function renderRxMeta() {
+  const ro = state.rx.finalized;
+  const b = $('#rxBadge');
+  b.className = 'badge ' + (ro ? 'final' : 'draft');
+  b.innerHTML = ro ? `${icon('lock', 'sm')}Finalized · read-only` : `${icon('file', 'sm')}Draft · not finalized${state.rx.version > 1 ? ` · amendment ${state.rx.version - 1}` : ''}`;
+  $('#rxNumberLabel').textContent = `Rx no. ${rxNumber()}`;
+  $('#rxFinalNote').hidden = !ro;
+  $('#addMed').disabled = ro;
+  $$('.rx-lockable').forEach(el => { el.readOnly = ro; });
+}
+function renderPrescription() {
+  $('#rxAdvice').value = state.advice; $('#rxInv').value = state.investigations; $('#rxFollow').value = state.followUp; $('#rxFollow').min = dayKey(0);
+  $('#rxError').hidden = true;
+  renderRxMeta(); renderMeds();
+}
+function validateMeds() {
+  const missing = state.meds.findIndex(m => !m.name.trim() || !m.dose.trim() || !m.duration.trim());
+  const err = $('#rxError');
+  if (missing >= 0) {
+    const m = state.meds[missing];
+    const key = !m.name.trim() ? 'name' : !m.dose.trim() ? 'dose' : 'duration';
+    err.innerHTML = `${icon('x-circle')}<div><b>Prescription incomplete</b><p>Medicine ${missing + 1}: enter the ${key === 'name' ? 'medicine name' : key}.</p></div>`;
+    err.hidden = false; const el = $(`#${m.id}-${key}`); el.setAttribute('aria-invalid', 'true'); el.focus();
+    return false;
+  }
+  err.hidden = true; return true;
+}
+function moveMed(id, dir) {
+  const i = state.meds.findIndex(m => m.id === id); const j = i + dir;
+  if (j < 0 || j >= state.meds.length) return;
+  [state.meds[i], state.meds[j]] = [state.meds[j], state.meds[i]];
+  renderMeds(`[data-action="med-${dir < 0 ? 'up' : 'down'}"][data-id="${id}"]`, `[data-action="med-${dir < 0 ? 'down' : 'up'}"][data-id="${id}"]`);
+  announce(`Medicine moved to position ${j + 1}.`);
+}
+
+/* ---- Dialog with focus trap ---- */
+let dlgReturn = null;
+function openFinalize() {
+  const d = $('#finalizeDialog'); dlgReturn = document.activeElement;
+  d.showModal(); d.querySelector('[data-action="dlg-cancel"]').focus();
+}
+function closeDialog() { const d = $('#finalizeDialog'); if (d.open) d.close(); }
+function trapFocus(e) {
+  if (e.key !== 'Tab') return;
+  const f = $$('button:not([disabled]), [href], input, select, textarea', e.currentTarget);
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+function finalizeRx() {
+  state.rx.finalized = true; state.rx.finalizedAt = new Date();
+  dlgReturn = null; closeDialog();
+  announce('Prescription finalized. It is now read-only.');
+  goTo(STEPS.findIndex(s => s.id === 'prescription-ready'));
+}
+
+/* ================= Step 10: Prescription paper ================= */
+function renderRxPaper() {
+  const d = doctor(); const p = patient(); const v = state.vitals;
+  const at = state.rx.finalizedAt || new Date();
+  const when = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(at);
+  const rows = state.meds.map((m, i) => `<tr><td>${i + 1}</td><td><b>${esc(m.name)}</b> ${esc(m.strength)}${m.instr ? `<small>${esc(m.instr)}</small>` : ''}</td><td>${esc(m.dose)}</td><td>${esc(m.route)}</td><td>${esc(m.freq)}</td><td>${esc(m.timing)}</td><td>${esc(m.duration)}</td></tr>`).join('');
+  const vit = [v.hr && `HR ${v.hr} bpm`, v.sys && v.dia && `BP ${v.sys}/${v.dia} mmHg`, v.temp && `Temp ${v.temp} °C`, v.spo2 && `SpO₂ ${v.spo2}%`, v.weight && `Wt ${v.weight} kg`].filter(Boolean).join(' · ');
+  $('#rxPrint').innerHTML = `
+    <div class="rx-watermark" aria-hidden="true"><span>DEMO — NOT A VALID<br>PRESCRIPTION</span></div>
+    <p class="sr-only">Watermark: DEMO — NOT A VALID PRESCRIPTION</p>
+    <div class="rx-top">
+      <div class="rx-clinic"><svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="10" fill="#0b5e63"/><path d="M14 8.5h6v5.5h5.5v6H20v5.5h-6V20H8.5v-6H14z" fill="#fff"/></svg>
+        <div><h2>${esc(CLINIC.name)}</h2><p>${esc(CLINIC.address)}</p><p>Tel ${esc(CLINIC.phone)} · via ${esc(APP_NAME)}</p></div></div>
+      <div class="rx-doc"><b>${esc(d.name)}</b><p>${esc(d.qual)}</p><p>Reg. No. <span style="font-family:var(--mono)">${esc(d.reg)}</span></p></div>
+    </div>
+    <div class="rx-meta">
+      <div><span>Patient</span><b>${esc(p.name)}</b></div>
+      <div><span>Age / Sex</span><b>${ageFrom(p.dob)} y / ${esc(p.gender)}</b></div>
+      <div><span>UHID</span><b style="font-family:var(--mono)">${esc(state.uhid)}</b></div>
+      <div><span>Date</span><b>${esc(when)}</b></div>
+      <div><span>Rx number</span><b style="font-family:var(--mono)">${esc(rxNumber())}</b></div>
+      <div><span>Status</span><b>${state.rx.version > 1 ? 'Amended v' + state.rx.version : 'Finalized v1'}</b></div>
+    </div>
+    ${vit ? `<p class="rx-sec" style="font-size:.8125rem;color:var(--p-muted)">Vitals: ${esc(vit)}</p>` : ''}
+    <p class="rx-symbol" aria-hidden="true">℞</p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Medicines table"><table class="rx-table"><caption class="sr-only">Prescribed medicines</caption>
+      <thead><tr><th scope="col">#</th><th scope="col">Medicine</th><th scope="col">Dose</th><th scope="col">Route</th><th scope="col">Frequency</th><th scope="col">Timing</th><th scope="col">Duration</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="rx-sec"><h3>Advice</h3><p>${esc(state.advice || '—')}</p></div>
+    <div class="rx-sec"><h3>Investigations</h3><p>${esc(state.investigations || 'None')}</p></div>
+    <div class="rx-sec"><h3>Follow-up</h3><p>${state.followUp ? esc(fmtLong(state.followUp)) : 'As needed'}</p></div>
+    <div class="rx-foot">
+      <p class="rx-auth">${icon('shield')}<span>Electronically authorised via authenticated session — not a digital signature certificate.</span></p>
+      <p>${esc(d.name)}<br>${esc(d.reg)}</p>
+    </div>`;
+}
+
+/* ================= Steps 11–12: Sending ================= */
+const SEND_STAGES = ['Queued', 'Sent', 'Delivered'];
+function rxMessage() { return `Your prescription is available. Open your secure patient portal to view it: ${SECURE_LINK} - ${APP_NAME}`; }
+function timelineHTML(st) {
+  return `<ol class="timeline" aria-label="Delivery status">${SEND_STAGES.map((s, i) => {
+    const done = st.status >= i; const cur = st.status + 1 === i && st.status >= 0;
+    const ic = done ? icon('check', 'sm') : cur ? '<span class="spinner" style="width:14px;height:14px;border-width:2px" aria-hidden="true"></span>' : icon('circle', 'sm');
+    return `<li class="${done ? 'done' : ''} ${cur ? 'current' : ''}"><span class="tl-dot">${ic}</span><div><b>${s}</b><span>${done ? esc(st.times[i]) : cur ? 'In progress…' : 'Pending'}</span></div></li>`;
+  }).join('')}</ol>`;
+}
+function flowHTML() {
+  return `<h2 class="section-title">How the secure link works</h2><ol class="flow">
+    <li><b><span class="n">1</span>Link opens portal</b>The link holds no health data — only a short-lived, single-use token.</li>
+    <li><b><span class="n">2</span>Patient signs in</b>Identity is verified with a one-time code sent to the registered mobile.</li>
+    <li><b><span class="n">3</span>Prescription shown</b>The prescription is displayed and downloadable inside the portal only.</li></ol>`;
+}
+function renderSend(ch) {
+  const isWa = ch === 'wa'; const st = state[ch]; const box = $(isWa ? '#waBox' : '#smsBox');
+  const channel = isWa ? 'WhatsApp' : 'SMS';
+  const consent = isWa ? state.consent.wa : state.consent.sms;
+  if (!box) return;
+  if (!consent) {
+    box.innerHTML = `<div class="alert warning">${icon('x-circle')}<div><b>Not sent — patient has not opted in to ${channel}</b>
+      <p>${isWa ? 'WhatsApp requires explicit opt-in. The prescription remains available in the patient portal.' : 'SMS updates are switched off for this patient.'}</p>
+      <div class="btn-row" style="margin-top:10px"><button type="button" class="btn" data-action="optin-${ch}">${icon('left')}Go back and update consent</button></div></div></div>
+      ${flowHTML()}`;
+    return;
+  }
+  const delivered = st.status >= 2;
+  const bub = bubbleHTML(channel, rxMessage(), { pending: st.status < 0, tpl: isWa ? 'Approved template · Utility' : '', meta: st.status < 0 ? 'Preview — not sent' : SEND_STAGES[st.status], time: delivered ? st.times[2] : '' });
+  box.innerHTML = `<div class="send-grid">
+      <div>${phoneHTML(channel, bub, isWa ? '' : 'To +91 ' + maskMobile(patient().mobile))}</div>
+      <div>
+        <div class="btn-row" style="margin-bottom:16px">
+          <button type="button" class="btn btn-primary" data-action="send-${ch}" ${st.status >= 0 ? 'disabled' : ''}>${icon(isWa ? 'chat' : 'send')}${st.status >= 0 ? (delivered ? 'Sent' : 'Sending…') : `Send via ${channel}`}</button>
+        </div>
+        <h2 class="section-title">Delivery status</h2>
+        ${timelineHTML(st)}
+        <div class="alert info" style="margin-top:6px">${icon('lock')}<div><b>No medicine names in the message</b><p>${isWa ? 'Uses a pre-approved utility template with a secure link only.' : 'The SMS only carries a secure link to the patient portal.'}</p></div></div>
+      </div></div>${flowHTML()}`;
+}
+function maskMobile(m) { return m ? `${m.slice(0, 2)}••• ••${m.slice(-3)}` : '••••• •••••'; }
+async function send(ch) {
+  const st = state[ch]; if (st.status >= 0) return;
+  const channel = ch === 'wa' ? 'WhatsApp' : 'SMS';
+  for (let i = 0; i < 3; i++) {
+    st.status = i; st.times[i] = clockNow();
+    if (i === 2) pushMessage(channel, rxMessage(), ch === 'wa' ? 'Approved template · Utility' : '');
+    if (STEPS[current].id === (ch === 'wa' ? 'send-whatsapp' : 'send-sms')) renderSend(ch);
+    announce(`${channel} ${SEND_STAGES[i].toLowerCase()}.`);
+    if (i < 2) await wait(900);
+  }
+  const b = $(`[data-action="send-${ch}"]`); if (b) b.focus();
+}
+
+/* ================= Inbox in rail ================= */
+function pushMessage(ch, text, tpl) { state.messages.push({ ch, text, tpl, time: clockNow() }); renderInbox(); }
+function renderInboxHead() {
+  const p = state.patient && state.patient.name ? state.patient : null;
+  $('#inboxName').textContent = p ? p.name : 'Patient';
+  $('#inboxAva').textContent = p ? p.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() : '—';
+  $('#inboxNum').textContent = p && p.mobile ? '+91 ' + maskMobile(p.mobile) : '+91 ••••• •••••';
+}
+function renderInbox() {
+  const ul = $('#inbox');
+  if (!state.messages.length) { ul.innerHTML = `<li class="empty">No messages yet. Messages appear here as the journey sends them.</li>`; return; }
+  ul.innerHTML = state.messages.map(m => `<li><span class="ch">${icon(m.ch === 'WhatsApp' ? 'chat' : 'sms', 'sm')}${esc(m.ch)}</span>${bubbleHTML(m.ch, m.text, { tpl: m.tpl, time: m.time, meta: 'Delivered' })}</li>`).join('');
+}
+
+/* ================= Step 13: Complete ================= */
+function renderComplete() {
+  const d = doctor(); const h = state.hold;
+  const item = (ok, title, detail) => `<li class="${ok ? 'ok' : 'skip'}">${icon(ok ? 'check-circle' : 'alert')}<div><b>${esc(title)}</b><span>${detail}</span></div></li>`;
+  const stTxt = (st, consent) => !consent ? 'Not sent — no opt-in' : st.status >= 2 ? `Delivered at ${esc(st.times[2])}` : st.status >= 0 ? 'In progress' : 'Not sent';
+  const hr = hrEvaluation();
+  $('#completeBox').innerHTML = `
+    <div class="done-hero"><div class="ring">${icon('check-circle', 'lg')}</div><p class="lede" style="margin:0 auto">You walked through the full ${esc(APP_NAME)} clinic journey — from search to a shared prescription. All data was fictional and stayed in this page.</p></div>
+    <ul class="sum-list">
+      ${item(true, 'Doctor selected', `${esc(d.name)} · ${esc(d.dept)}`)}
+      ${item(state.booked, 'Appointment booked', state.booked ? `${esc(state.appointmentId)} · ${esc(fmtLong(h.dateKey))} at ${fmtTime(h.time)}` : 'Not completed')}
+      ${item(true, 'Consultation notes', 'SOAP notes recorded for ' + esc(patient().name) + ' (' + esc(state.uhid) + ')')}
+      ${item(hr.kind === 'ok', 'Vitals', hr.kind === 'none' ? 'No valid heart rate' : `Heart rate ${hr.n} bpm — ${hr.kind === 'ok' ? 'within reference range' : 'requires review'}`)}
+      ${item(state.rx.finalized, 'Prescription', `${esc(rxNumber())} · ${state.meds.length} medicine${state.meds.length > 1 ? 's' : ''} · ${state.rx.finalized ? 'finalized' : 'draft'}`)}
+      ${item(state.sms.status >= 2, 'SMS link', stTxt(state.sms, state.consent.sms))}
+      ${item(state.wa.status >= 2, 'WhatsApp link', stTxt(state.wa, state.consent.wa))}
+    </ul>
+    <div class="btn-row" style="margin-top:20px;justify-content:center"><button type="button" class="btn btn-primary" data-action="restart">${icon('restart')}Restart demo</button></div>`;
+}
+
+const RENDER = {
+  'find-doctor': () => { renderChips(); renderDoctors(); $('#docSearch').value = state.query; },
+  'doctor-profile': renderProfile,
+  'date-slot': renderDateSlot,
+  'patient-details': renderPatient,
+  'confirm': renderReview,
+  'confirmed': renderConfirmed,
+  'consultation': renderConsultation,
+  'vitals': renderVitals,
+  'prescription': renderPrescription,
+  'prescription-ready': renderRxPaper,
+  'send-sms': () => renderSend('sms'),
+  'send-whatsapp': () => renderSend('wa'),
+  'complete': renderComplete
+};
+
+/* ================= Navigation logic ================= */
+function blockReason(id) {
+  switch (id) {
+    case 'find-doctor': return state.doctorId ? '' : 'Select a doctor to continue.';
+    case 'date-slot': return state.booked || holdValid() ? '' : state.checking ? 'Checking availability — one moment.' : 'Select an available time slot to continue.';
+    case 'patient-details': return validatePatient() ? '' : 'Some details need attention.';
+    case 'vitals': return validateAllVitals() ? '' : 'Please check the highlighted vitals.';
+    default: return '';
+  }
+}
+async function next() {
+  if (busy) return;
+  const id = STEPS[current].id;
+  if (id === 'confirm' && !state.booked) { await confirmBooking(); return; }
+  if (id === 'prescription' && !state.rx.finalized) { if (validateMeds()) openFinalize(); return; }
+  if (id === 'patient-details') readPatientForm();
+  const why = blockReason(id);
+  if (why) { setHint(why, true); return; }
+  if (id === 'patient-details') state.returnTo = null;
+  goTo(current + 1);
+}
+function restart() {
+  clearInterval(holdTimerId);
+  state = freshState(); current = 0; maxReached = 0; busy = false;
+  $('#patientForm').reset(); PFIELDS.forEach(id => setFieldError($('#' + id), $('#' + id + '-err'), ''));
+  $('#formSummary').hidden = true;
+  renderInbox(); renderInboxHead();
+  $$('.step').forEach(s => { s.hidden = true; });
+  current = -1; goTo(0);
+}
+
+/* ================= Events ================= */
+function onClick(e) {
+  const g = e.target.closest('[data-goto]');
+  if (g && !g.disabled) { goTo(+g.dataset.goto); return; }
+  const chip = e.target.closest('[data-dept]');
+  if (chip) { state.dept = chip.dataset.dept; renderChips(); renderDoctors(); $(`[data-dept="${CSS.escape(state.dept)}"]`).focus(); return; }
+  const date = e.target.closest('[data-date]');
+  if (date && !date.disabled) { if (state.checking) return; state.dateKey = date.dataset.date; renderDates(); renderSlots(); $(`[data-date="${state.dateKey}"]`).focus(); return; }
+  const slot = e.target.closest('[data-slot]');
+  if (slot && !slot.disabled) { selectSlot(slot.dataset.slot); return; }
+  const a = e.target.closest('[data-action]');
+  if (!a || a.disabled) return;
+  const id = a.dataset.id;
+  switch (a.dataset.action) {
+    case 'select-doctor':
+      if (state.doctorId !== id) { state.doctorId = id; state.hold = null; state.dateKey = null; state.slotError = ''; }
+      goTo(1); break;
+    case 'fill-sample': fillSample(); break;
+    case 'return-wa': readPatientForm(); state.returnTo = null; goTo(STEPS.findIndex(s => s.id === 'send-whatsapp')); break;
+    case 'read-device': readDevice(); break;
+    case 'try-108': state.vitals.hr = '108'; state.hrSource = 'Manual entry'; $('#vHr').value = '108'; validateVital('hr'); renderHR(); $('#vHr').focus(); break;
+    case 'add-med':
+      state.meds.push(newMed()); renderMeds(`#${state.meds[state.meds.length - 1].id}-name`); announce(`Medicine ${state.meds.length} added.`); break;
+    case 'med-remove': {
+      const i = state.meds.findIndex(m => m.id === id); state.meds.splice(i, 1);
+      renderMeds(state.meds[Math.max(0, i - 1)] ? `#${state.meds[Math.max(0, i - 1)].id}-name` : '#addMed'); announce('Medicine removed.'); break;
+    }
+    case 'med-up': moveMed(id, -1); break;
+    case 'med-down': moveMed(id, 1); break;
+    case 'amend':
+      state.rx.finalized = false; state.rx.version++; state.rx.finalizedAt = null;
+      renderRxMeta(); renderMeds(); updateChrome(); announce(`Amended version ${state.rx.version} created as a draft.`); $(`#${state.meds[0].id}-name`).focus(); break;
+    case 'dlg-cancel': closeDialog(); break;
+    case 'dlg-finalize': finalizeRx(); break;
+    case 'print': window.print(); break;
+    case 'send-sms': send('sms'); break;
+    case 'send-wa': send('wa'); break;
+    case 'optin-wa': state.returnTo = 'send-whatsapp'; goTo(STEPS.findIndex(s => s.id === 'patient-details')); $('#cWa').focus(); break;
+    case 'optin-sms': goTo(STEPS.findIndex(s => s.id === 'patient-details')); $('#cSms').focus(); break;
+    case 'restart': restart(); break;
+  }
+}
+function onInput(e) {
+  const t = e.target;
+  if (t.id === 'docSearch') { state.query = t.value; renderDoctors(); return; }
+  if (t.dataset.soap) { state.soap[t.dataset.soap] = t.value; return; }
+  if (t.dataset.vital) {
+    const k = t.dataset.vital; state.vitals[k] = t.value;
+    if (k === 'hr') state.hrSource = 'Manual entry';
+    if (t.getAttribute('aria-invalid') === 'true') validateVital(k);
+    renderBMI(); if (k === 'hr') renderHR(); return;
+  }
+  if (t.id === 'rMin' || t.id === 'rMax') { if (!validateRange()) renderHR(); return; }
+  if (t.dataset.med) {
+    const m = state.meds.find(x => x.id === t.dataset.med); m[t.dataset.key] = t.value;
+    if (t.value.trim()) t.removeAttribute('aria-invalid');
+    $(`#${m.id}-sum`).textContent = medSummary(m) || 'Enter a medicine name to see the summary'; return;
+  }
+  if (t.id === 'rxAdvice') state.advice = t.value;
+  if (t.id === 'rxInv') state.investigations = t.value;
+  if (t.id === 'rxFollow') state.followUp = t.value;
+  if (t.id === 'pMobile') t.value = t.value.replace(/\D/g, '').slice(0, 10);
+  if (PFIELDS.includes(t.id) && t.getAttribute('aria-invalid') === 'true') validateField(t.id);
+  if (t.id === 'simConflict') { state.simulateConflict = t.checked; $('#simState').textContent = t.checked ? 'On' : 'Off'; announce(`Simulation ${t.checked ? 'on' : 'off'}.`); }
+  if (t.id === 'cSms' || t.id === 'cWa') readPatientForm();
+}
+function onBlur(e) {
+  const t = e.target;
+  if (PFIELDS.includes(t.id) && t.value.trim()) validateField(t.id);
+  if (t.dataset && t.dataset.vital) validateVital(t.dataset.vital);
+}
+
+function setupJourneyDisclosure() {
+  const mq = window.matchMedia('(min-width: 1000px)');
+  const apply = () => { $('#journey').open = mq.matches; };
+  apply(); mq.addEventListener('change', apply);
+}
+
+function init() {
+  state = freshState();
+  renderAppName();
+  document.addEventListener('click', onClick);
+  document.addEventListener('input', onInput);
+  document.addEventListener('change', onInput);
+  document.addEventListener('focusout', onBlur);
+  $('#nextBtn').addEventListener('click', next);
+  $('#backBtn').addEventListener('click', () => { if (!busy) goTo(current - 1); });
+  $('#patientForm').addEventListener('submit', e => { e.preventDefault(); next(); });
+  $('#vitalsForm').addEventListener('submit', e => { e.preventDefault(); next(); });
+  const dlg = $('#finalizeDialog');
+  dlg.addEventListener('keydown', trapFocus);
+  dlg.addEventListener('close', () => { if (dlgReturn && document.contains(dlgReturn)) dlgReturn.focus(); dlgReturn = null; });
+  dlg.addEventListener('click', e => { if (e.target === dlg) closeDialog(); });
+  setupJourneyDisclosure();
+  renderInbox(); renderInboxHead();
+  goTo(0, { focus: false });
+}
+init();
+</script>
+</body>
+</html>

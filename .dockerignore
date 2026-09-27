@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/var
+server/src/generated
+.env
+.env.*
+!.env.example
+playwright-report
+test-results
+blob-report
+coverage
+*.log
+*.tgz
+.git

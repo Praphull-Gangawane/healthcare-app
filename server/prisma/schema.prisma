@@ -1,0 +1,1560 @@
+// [APP_NAME] — Hospital / Clinic Management Platform
+// PostgreSQL + Prisma. All timestamps stored in UTC (timestamptz). Money uses Decimal, never float.
+// Additional DB-level safeguards (partial unique index for slot booking, append-only triggers
+// for audit + finalized prescription versions) live in prisma/migrations/*_db_safeguards/migration.sql.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────── Enums ───────────────────────────────
+
+enum FacilityType {
+  CLINIC
+  MULTI_SPECIALTY_CLINIC
+  HOSPITAL
+  DIAGNOSTIC_CENTER
+}
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+  DISABLED
+}
+
+enum Gender {
+  FEMALE
+  MALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum GuardianRelationship {
+  PARENT
+  CHILD
+  SPOUSE
+  LEGAL_GUARDIAN
+  CAREGIVER
+  OTHER
+}
+
+enum ProxyAccessLevel {
+  FULL
+  APPOINTMENTS_ONLY
+}
+
+enum ProxyStatus {
+  PENDING
+  ACTIVE
+  REVOKED
+}
+
+enum MedicalHistoryType {
+  CONDITION
+  SURGERY
+  FAMILY_HISTORY
+  CURRENT_MEDICATION
+  NOTE
+}
+
+enum AllergySeverity {
+  MILD
+  MODERATE
+  SEVERE
+  UNKNOWN
+}
+
+enum RecordStatus {
+  ACTIVE
+  CORRECTED
+  ENTERED_IN_ERROR
+  INACTIVE
+}
+
+enum AppointmentType {
+  IN_PERSON
+  TELECONSULTATION
+  FOLLOW_UP
+  URGENT
+  DIAGNOSTIC
+  PROCEDURE
+}
+
+enum AppointmentStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+  CONFIRMED
+  CHECKED_IN
+  WAITING
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  PORTAL
+  RECEPTION
+  WALK_IN
+  FOLLOW_UP
+}
+
+enum LeaveType {
+  LEAVE
+  HOLIDAY
+  SLOT_BLOCK
+}
+
+enum WaitlistStatus {
+  WAITING
+  OFFERED
+  BOOKED
+  CANCELLED
+}
+
+enum QueueStatus {
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+enum TokenStatus {
+  WAITING
+  CALLED
+  IN_CONSULTATION
+  SKIPPED
+  ABSENT
+  COMPLETED
+  TRANSFERRED
+}
+
+enum EncounterStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NoteStatus {
+  DRAFT
+  FINAL
+}
+
+enum NoteType {
+  SUBJECTIVE
+  OBJECTIVE
+  ASSESSMENT
+  PLAN
+  GENERAL
+  ADDENDUM
+}
+
+enum VitalType {
+  HEART_RATE
+  BLOOD_PRESSURE
+  RESPIRATORY_RATE
+  TEMPERATURE
+  OXYGEN_SATURATION
+  HEIGHT
+  WEIGHT
+  BMI
+}
+
+enum MeasurementSource {
+  MANUAL
+  DEVICE
+  HEALTH_PLATFORM
+  PATIENT_REPORTED
+  DEMO_ESTIMATE
+}
+
+enum MeasurementFlag {
+  WITHIN_RANGE
+  REQUIRES_REVIEW
+  URGENT_REVIEW
+  NOT_EVALUATED
+}
+
+enum DiagnosisType {
+  PRIMARY
+  SECONDARY
+  DIFFERENTIAL
+  PROVISIONAL
+}
+
+enum CodeSystem {
+  ICD10
+  ICD11
+  SNOMED_CT
+  FREE_TEXT
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  FINALIZED
+  AMENDED
+  CANCELLED
+}
+
+enum SignatureMethod {
+  SESSION_ATTESTATION
+  DIGITAL_SIGNATURE
+}
+
+enum InvestigationCategory {
+  BLOOD
+  URINE
+  IMAGING
+  ECG
+  OTHER
+}
+
+enum OrderPriority {
+  ROUTINE
+  URGENT
+  STAT
+}
+
+enum InvestigationStatus {
+  ORDERED
+  SCHEDULED
+  COLLECTED
+  PROCESSING
+  COMPLETED
+  VERIFIED
+  CANCELLED
+}
+
+enum AbnormalFlag {
+  NORMAL
+  LOW
+  HIGH
+  ABNORMAL
+  NOT_APPLICABLE
+}
+
+enum DocumentType {
+  PRESCRIPTION
+  LAB_REPORT
+  IMAGING_REPORT
+  REFERRAL_LETTER
+  DISCHARGE_SUMMARY
+  PATIENT_UPLOAD
+  OTHER
+}
+
+enum DocumentVisibility {
+  PATIENT_VISIBLE
+  CLINICAL_ONLY
+}
+
+enum ServiceCategory {
+  CONSULTATION
+  DIAGNOSTIC
+  PROCEDURE
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIALLY_PAID
+  VOID
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  ONLINE
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+  EMAIL
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  SKIPPED_NO_CONSENT
+  SKIPPED_NO_CONTACT
+}
+
+enum ConsentSource {
+  PORTAL
+  RECEPTION
+  REGISTRATION
+  CHANNEL_REPLY
+  SYSTEM_DEFAULT
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+  FAILURE
+}
+
+enum TeleconsultStatus {
+  SCHEDULED
+  ACTIVE
+  ENDED
+  CANCELLED
+  CONVERTED_TO_IN_PERSON
+}
+
+enum HealthProviderType {
+  MOCK
+  APPLE_HEALTHKIT
+  ANDROID_HEALTH_CONNECT
+  WEARABLE
+  BLUETOOTH_DEVICE
+  CAMERA_PPG_DEMO
+}
+
+enum HealthPermissionStatus {
+  NOT_REQUESTED
+  GRANTED
+  DENIED
+  REVOKED
+}
+
+enum ReadingValidation {
+  VALID
+  INVALID
+  WELLNESS_ESTIMATE
+}
+
+enum PrivacyRequestType {
+  DATA_EXPORT
+  CORRECTION
+  ACCOUNT_DEACTIVATION
+  ERASURE
+}
+
+enum PrivacyRequestStatus {
+  RECEIVED
+  IN_REVIEW
+  COMPLETED
+  REJECTED
+}
+
+enum SecureLinkPurpose {
+  PRESCRIPTION_VIEW
+  LAB_REPORT_VIEW
+  DOCUMENT_VIEW
+}
+
+// ─────────────────────── Organization / Facility ───────────────────────
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  uhidPrefix   String   @default("PT")
+  uhidPadding  Int      @default(8)
+  settings     Json     @default("{}")
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  facilities      Facility[]
+  users           User[]
+  patients        Patient[]
+  referenceRanges VitalReferenceRange[]
+  retention       RetentionPolicy[]
+  forms           FormDefinition[]
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String?
+  country    String  @default("IN")
+
+  facilities Facility[]
+  patients   Patient[]
+}
+
+model Facility {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  code           String
+  type           FacilityType @default(CLINIC)
+  phone          String?
+  email          String?
+  timezone       String       @default("Asia/Kolkata")
+  addressId      String?
+  registrationNo String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  address      Address?           @relation(fields: [addressId], references: [id])
+  departments  Department[]
+  rooms        ConsultationRoom[]
+  holidays     FacilityHoliday[]
+  schedules    DoctorSchedule[]
+  doctorLinks  DoctorDepartment[]
+  appointments Appointment[]
+  queues       Queue[]
+  services     Service[]
+  invoices     Invoice[]
+  encounters   Encounter[]
+  userRoles    UserRole[]
+
+  @@unique([organizationId, code])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  facilityId  String
+  name        String
+  code        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  facility     Facility           @relation(fields: [facilityId], references: [id])
+  doctorLinks  DoctorDepartment[]
+  rooms        ConsultationRoom[]
+  appointments Appointment[]
+  schedules    DoctorSchedule[]
+
+  @@unique([facilityId, code])
+  @@index([name])
+}
+
+model ConsultationRoom {
+  id           String  @id @default(cuid())
+  facilityId   String
+  departmentId String?
+  name         String
+  code         String
+  isActive     Boolean @default(true)
+
+  facility   Facility         @relation(fields: [facilityId], references: [id])
+  department Department?      @relation(fields: [departmentId], references: [id])
+  schedules  DoctorSchedule[]
+  queues     Queue[]
+
+  @@unique([facilityId, code])
+}
+
+model FacilityHoliday {
+  id         String   @id @default(cuid())
+  facilityId String
+  date       DateTime @db.Date
+  name       String
+
+  facility Facility @relation(fields: [facilityId], references: [id])
+
+  @@unique([facilityId, date])
+}
+
+// ─────────────────────────── Identity & Access ───────────────────────────
+
+model User {
+  id               String     @id @default(cuid())
+  organizationId   String?
+  email            String     @unique
+  phone            String?
+  passwordHash     String
+  displayName      String
+  status           UserStatus @default(ACTIVE)
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?  @db.Timestamptz(3)
+  lastLoginAt      DateTime?  @db.Timestamptz(3)
+  mfaEnabled       Boolean    @default(false)
+  passwordChangedAt DateTime? @db.Timestamptz(3)
+  createdAt        DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime   @updatedAt @db.Timestamptz(3)
+
+  organization   Organization?     @relation(fields: [organizationId], references: [id])
+  roles          UserRole[]
+  sessions       Session[]
+  doctorProfile  DoctorProfile?
+  patientSelf    Patient?          @relation("PatientSelfAccount")
+  proxyFor       PatientGuardian[] @relation("ProxyUser")
+  auditEntries   AuditLog[]
+
+  @@index([organizationId])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  permissions RolePermission[]
+  userRoles   UserRole[]
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  description String?
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+/// A role granted to a user, optionally scoped to one facility (null = all facilities in the user's organization).
+model UserRole {
+  id         String   @id @default(cuid())
+  userId     String
+  roleId     String
+  facilityId String?
+  grantedBy  String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     Role      @relation(fields: [roleId], references: [id])
+  facility Facility? @relation(fields: [facilityId], references: [id])
+
+  @@unique([userId, roleId, facilityId])
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  refreshTokenHash String    @unique
+  expiresAt        DateTime  @db.Timestamptz(3)
+  revokedAt        DateTime? @db.Timestamptz(3)
+  ip               String?
+  userAgent        String?
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  lastUsedAt       DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model IdSequence {
+  key   String @id
+  value Int    @default(0)
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(cuid())
+  key            String
+  userId         String
+  route          String
+  requestHash    String
+  responseStatus Int
+  responseBody   Json
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt      DateTime @db.Timestamptz(3)
+
+  @@unique([key, userId, route])
+}
+
+// ───────────────────────────── Patients ─────────────────────────────
+
+model Patient {
+  id             String    @id @default(cuid())
+  uhid           String    @unique
+  organizationId String
+  userId         String?   @unique
+  firstName      String
+  lastName       String?
+  fullName       String
+  nameNormalized String
+  dateOfBirth    DateTime  @db.Date
+  gender         Gender
+  mobile         String?
+  email          String?
+  addressId      String?
+  bloodGroup     String?
+  customFields   Json      @default("{}")
+  isActive       Boolean   @default(true)
+  deactivatedAt  DateTime? @db.Timestamptz(3)
+  createdById    String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+
+  organization   Organization        @relation(fields: [organizationId], references: [id])
+  user           User?               @relation("PatientSelfAccount", fields: [userId], references: [id])
+  address        Address?            @relation(fields: [addressId], references: [id])
+  contacts       PatientContact[]
+  guardians      PatientGuardian[]
+  history        MedicalHistoryEntry[]
+  allergies      Allergy[]
+  appointments   Appointment[]
+  encounters     Encounter[]
+  vitals         Vital[]
+  diagnoses      Diagnosis[]
+  prescriptions  Prescription[]
+  orders         InvestigationOrder[]
+  documents      MedicalDocument[]
+  invoices       Invoice[]
+  notifications  Notification[]
+  consents       NotificationConsent[]
+  healthSources  HealthDataSource[]
+  healthReadings HealthDataReading[]
+  intakes        PatientIntake[]
+  queueTokens    QueueToken[]
+  privacyReqs    PrivacyRequest[]
+  waitlist       WaitlistEntry[]
+
+  @@index([organizationId, mobile])
+  @@index([organizationId, dateOfBirth])
+  @@index([organizationId, nameNormalized])
+  @@index([email])
+}
+
+model PatientContact {
+  id           String  @id @default(cuid())
+  patientId    String
+  name         String
+  relationship String
+  phone        String
+  isEmergency  Boolean @default(true)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+/// Explicit proxy/guardian relationship. Adult-to-adult proxy access requires the patient's consent (consentedAt).
+model PatientGuardian {
+  id           String               @id @default(cuid())
+  patientId    String
+  proxyUserId  String
+  relationship GuardianRelationship
+  accessLevel  ProxyAccessLevel     @default(FULL)
+  status       ProxyStatus          @default(PENDING)
+  consentedAt  DateTime?            @db.Timestamptz(3)
+  validUntil   DateTime?            @db.Timestamptz(3)
+  createdById  String?
+  createdAt    DateTime             @default(now()) @db.Timestamptz(3)
+  revokedAt    DateTime?            @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  proxy   User    @relation("ProxyUser", fields: [proxyUserId], references: [id])
+
+  @@unique([patientId, proxyUserId])
+  @@index([proxyUserId])
+}
+
+model MedicalHistoryEntry {
+  id           String             @id @default(cuid())
+  patientId    String
+  type         MedicalHistoryType
+  description  String
+  onsetDate    DateTime?          @db.Date
+  status       RecordStatus       @default(ACTIVE)
+  recordedById String?
+  createdAt    DateTime           @default(now()) @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, type])
+}
+
+model Allergy {
+  id           String          @id @default(cuid())
+  patientId    String
+  substance    String
+  reaction     String?
+  severity     AllergySeverity @default(UNKNOWN)
+  status       RecordStatus    @default(ACTIVE)
+  recordedById String?
+  createdAt    DateTime        @default(now()) @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+}
+
+/// Configurable forms (registration extras, intake questionnaires). Stored as JSON field definitions.
+model FormDefinition {
+  id             String   @id @default(cuid())
+  organizationId String
+  key            String
+  version        Int      @default(1)
+  title          String
+  fields         Json
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, key, version])
+}
+
+// ─────────────────────────── Doctors & Schedules ───────────────────────────
+
+model DoctorProfile {
+  id                   String            @id @default(cuid())
+  userId               String            @unique
+  displayName          String
+  qualifications       String
+  specialty            String
+  experienceYears      Int
+  registrationNumber   String?
+  registrationCouncil  String?
+  bio                  String?
+  languages            String[]
+  gender               Gender?
+  consultationFee      Decimal           @db.Decimal(12, 2)
+  teleconsultationFee  Decimal?          @db.Decimal(12, 2)
+  consultationTypes    AppointmentType[]
+  photoUrl             String?
+  isActive             Boolean           @default(true)
+  createdAt            DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime          @updatedAt @db.Timestamptz(3)
+
+  user          User               @relation(fields: [userId], references: [id])
+  departments   DoctorDepartment[]
+  schedules     DoctorSchedule[]
+  leaves        DoctorLeave[]
+  appointments  Appointment[]
+  queues        Queue[]
+  encounters    Encounter[]
+  prescriptions Prescription[]
+  orders        InvestigationOrder[]
+  waitlist      WaitlistEntry[]
+
+  @@index([specialty])
+  @@index([displayName])
+}
+
+model DoctorDepartment {
+  doctorId     String
+  departmentId String
+  facilityId   String
+
+  doctor     DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  department Department    @relation(fields: [departmentId], references: [id])
+  facility   Facility      @relation(fields: [facilityId], references: [id])
+
+  @@id([doctorId, departmentId])
+  @@index([facilityId])
+}
+
+/// Recurring weekly availability. Times are local wall-clock (HH:mm) in the facility timezone.
+model DoctorSchedule {
+  id                String            @id @default(cuid())
+  doctorId          String
+  facilityId        String
+  departmentId      String
+  roomId            String?
+  dayOfWeek         Int
+  startTime         String
+  endTime           String
+  breaks            Json              @default("[]")
+  slotMinutes       Int               @default(15)
+  bufferMinutes     Int               @default(0)
+  maxAppointments   Int?
+  overbookPerSlot   Int               @default(0)
+  consultationTypes AppointmentType[]
+  validFrom         DateTime          @db.Date
+  validTo           DateTime?         @db.Date
+  isActive          Boolean           @default(true)
+
+  doctor     DoctorProfile     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  facility   Facility          @relation(fields: [facilityId], references: [id])
+  department Department        @relation(fields: [departmentId], references: [id])
+  room       ConsultationRoom? @relation(fields: [roomId], references: [id])
+
+  @@index([doctorId, dayOfWeek])
+}
+
+model DoctorLeave {
+  id        String    @id @default(cuid())
+  doctorId  String
+  type      LeaveType @default(LEAVE)
+  startAt   DateTime  @db.Timestamptz(3)
+  endAt     DateTime  @db.Timestamptz(3)
+  reason    String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, startAt])
+}
+
+// ─────────────────────────── Appointments & Queue ───────────────────────────
+
+model Appointment {
+  id                    String            @id @default(cuid())
+  appointmentNumber     String            @unique
+  facilityId            String
+  departmentId          String
+  doctorId              String
+  patientId             String
+  bookedById            String?
+  type                  AppointmentType
+  status                AppointmentStatus
+  source                AppointmentSource @default(PORTAL)
+  startAt               DateTime          @db.Timestamptz(3)
+  endAt                 DateTime          @db.Timestamptz(3)
+  slotSeq               Int               @default(0)
+  isWalkIn              Boolean           @default(false)
+  reason                String?
+  holdExpiresAt         DateTime?         @db.Timestamptz(3)
+  confirmedAt           DateTime?         @db.Timestamptz(3)
+  checkedInAt           DateTime?         @db.Timestamptz(3)
+  consultationStartedAt DateTime?         @db.Timestamptz(3)
+  completedAt           DateTime?         @db.Timestamptz(3)
+  cancelledAt           DateTime?         @db.Timestamptz(3)
+  noShowAt              DateTime?         @db.Timestamptz(3)
+  cancelReason          String?
+  rescheduledFromId     String?           @unique
+  followUpOfId          String?
+  createdAt             DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime          @updatedAt @db.Timestamptz(3)
+
+  facility        Facility                   @relation(fields: [facilityId], references: [id])
+  department      Department                 @relation(fields: [departmentId], references: [id])
+  doctor          DoctorProfile              @relation(fields: [doctorId], references: [id])
+  patient         Patient                    @relation(fields: [patientId], references: [id])
+  rescheduledFrom Appointment?               @relation("Reschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo   Appointment?               @relation("Reschedule")
+  history         AppointmentStatusHistory[]
+  queueToken      QueueToken?
+  encounter       Encounter?
+  intake          PatientIntake?
+  teleconsult     Teleconsultation?
+  invoices        Invoice[]
+
+  @@index([doctorId, startAt])
+  @@index([patientId, startAt])
+  @@index([facilityId, startAt])
+  @@index([status, startAt])
+}
+
+model AppointmentStatusHistory {
+  id            String             @id @default(cuid())
+  appointmentId String
+  fromStatus    AppointmentStatus?
+  toStatus      AppointmentStatus
+  changedById   String?
+  reason        String?
+  changedAt     DateTime           @default(now()) @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId, changedAt])
+}
+
+model WaitlistEntry {
+  id            String         @id @default(cuid())
+  doctorId      String
+  patientId     String
+  preferredDate DateTime       @db.Date
+  status        WaitlistStatus @default(WAITING)
+  note          String?
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+
+  doctor  DoctorProfile @relation(fields: [doctorId], references: [id])
+  patient Patient       @relation(fields: [patientId], references: [id])
+
+  @@index([doctorId, preferredDate, status])
+}
+
+model PatientIntake {
+  id                 String   @id @default(cuid())
+  appointmentId      String   @unique
+  patientId          String
+  chiefComplaint     String
+  symptoms           String[]
+  symptomDuration    String?
+  existingConditions String?
+  allergiesText      String?
+  currentMedications String?
+  answers            Json     @default("{}")
+  submittedById      String?
+  submittedAt        DateTime @default(now()) @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id])
+}
+
+model Queue {
+  id              String      @id @default(cuid())
+  facilityId      String
+  doctorId        String
+  roomId          String?
+  queueDate       DateTime    @db.Date
+  status          QueueStatus @default(OPEN)
+  lastTokenNumber Int         @default(0)
+  createdAt       DateTime    @default(now()) @db.Timestamptz(3)
+
+  facility Facility          @relation(fields: [facilityId], references: [id])
+  doctor   DoctorProfile     @relation(fields: [doctorId], references: [id])
+  room     ConsultationRoom? @relation(fields: [roomId], references: [id])
+  tokens   QueueToken[]
+
+  @@unique([doctorId, facilityId, queueDate])
+}
+
+model QueueToken {
+  id            String      @id @default(cuid())
+  queueId       String
+  appointmentId String?     @unique
+  patientId     String
+  tokenNumber   Int
+  status        TokenStatus @default(WAITING)
+  priority      Int         @default(0)
+  recallCount   Int         @default(0)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(3)
+  calledAt      DateTime?   @db.Timestamptz(3)
+  servedAt      DateTime?   @db.Timestamptz(3)
+  completedAt   DateTime?   @db.Timestamptz(3)
+  transferredTo String?
+
+  queue       Queue        @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  patient     Patient      @relation(fields: [patientId], references: [id])
+
+  @@unique([queueId, tokenNumber])
+  @@index([queueId, status])
+}
+
+// ─────────────────────────────── Clinical ───────────────────────────────
+
+model Encounter {
+  id                   String          @id @default(cuid())
+  encounterNumber      String          @unique
+  appointmentId        String?         @unique
+  patientId            String
+  doctorId             String
+  facilityId           String
+  status               EncounterStatus @default(IN_PROGRESS)
+  chiefComplaint       String?
+  historyOfIllness     String?
+  examinationFindings  String?
+  assessmentNotes      String?
+  planNotes            String?
+  followUpDate         DateTime?       @db.Date
+  followUpInstructions String?
+  version              Int             @default(1)
+  startedAt            DateTime        @default(now()) @db.Timestamptz(3)
+  completedAt          DateTime?       @db.Timestamptz(3)
+  updatedAt            DateTime        @updatedAt @db.Timestamptz(3)
+
+  appointment   Appointment?         @relation(fields: [appointmentId], references: [id])
+  patient       Patient              @relation(fields: [patientId], references: [id])
+  doctor        DoctorProfile        @relation(fields: [doctorId], references: [id])
+  facility      Facility             @relation(fields: [facilityId], references: [id])
+  notes         ClinicalNote[]
+  vitals        Vital[]
+  diagnoses     Diagnosis[]
+  prescriptions Prescription[]
+  orders        InvestigationOrder[]
+  documents     MedicalDocument[]
+
+  @@index([patientId, startedAt])
+  @@index([doctorId, startedAt])
+}
+
+/// Notes are drafts until finalized. Finalized notes are never edited — corrections are ADDENDUM notes.
+/// AI-generated text must stay isAiDraft=true until a clinician reviews it (aiReviewedById).
+model ClinicalNote {
+  id             String     @id @default(cuid())
+  encounterId    String
+  authorId       String
+  type           NoteType   @default(GENERAL)
+  content        String
+  status         NoteStatus @default(DRAFT)
+  isAiDraft      Boolean    @default(false)
+  aiReviewedById String?
+  addendumToId   String?
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+  finalizedAt    DateTime?  @db.Timestamptz(3)
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([encounterId])
+}
+
+model Vital {
+  id               String            @id @default(cuid())
+  patientId        String
+  encounterId      String?
+  type             VitalType
+  value            Decimal           @db.Decimal(8, 2)
+  value2           Decimal?          @db.Decimal(8, 2)
+  unit             String
+  measuredAt       DateTime          @db.Timestamptz(3)
+  source           MeasurementSource @default(MANUAL)
+  context          String?
+  deviceName       String?
+  healthReadingId  String?
+  flag             MeasurementFlag   @default(NOT_EVALUATED)
+  status           RecordStatus      @default(ACTIVE)
+  correctsId       String?           @unique
+  correctionReason String?
+  recordedById     String
+  recordedAt       DateTime          @default(now()) @db.Timestamptz(3)
+
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  encounter Encounter? @relation(fields: [encounterId], references: [id])
+  corrects  Vital?     @relation("VitalCorrection", fields: [correctsId], references: [id])
+  correctedBy Vital?   @relation("VitalCorrection")
+
+  @@index([patientId, type, measuredAt])
+}
+
+/// Clinician-configurable reference ranges. Used only to flag values for review — never to diagnose.
+model VitalReferenceRange {
+  id             String    @id @default(cuid())
+  organizationId String
+  type           VitalType
+  context        String?
+  ageMinYears    Int       @default(0)
+  ageMaxYears    Int       @default(150)
+  low            Decimal   @db.Decimal(8, 2)
+  high           Decimal   @db.Decimal(8, 2)
+  urgentLow      Decimal?  @db.Decimal(8, 2)
+  urgentHigh     Decimal?  @db.Decimal(8, 2)
+  low2           Decimal?  @db.Decimal(8, 2)
+  high2          Decimal?  @db.Decimal(8, 2)
+  unit           String
+  updatedById    String?
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, type])
+}
+
+model Diagnosis {
+  id           String        @id @default(cuid())
+  encounterId  String
+  patientId    String
+  code         String?
+  codeSystem   CodeSystem    @default(FREE_TEXT)
+  description  String
+  type         DiagnosisType @default(PRIMARY)
+  status       RecordStatus  @default(ACTIVE)
+  recordedById String
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  patient   Patient   @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+}
+
+// ─────────────────────────────── Prescriptions ───────────────────────────────
+
+/// Medicine catalog (generic names). Not a drug-interaction database.
+model Medication {
+  id          String  @id @default(cuid())
+  genericName String
+  strength    String
+  form        String
+  route       String
+  isActive    Boolean @default(true)
+
+  items PrescriptionItem[]
+
+  @@unique([genericName, strength, form])
+  @@index([genericName])
+}
+
+model Prescription {
+  id                 String             @id @default(cuid())
+  prescriptionNumber String             @unique
+  patientId          String
+  doctorId           String
+  encounterId        String
+  status             PrescriptionStatus @default(DRAFT)
+  advice             String?
+  followUpDate       DateTime?          @db.Date
+  investigationNotes String?
+  currentVersion     Int                @default(0)
+  finalizedAt        DateTime?          @db.Timestamptz(3)
+  createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime           @updatedAt @db.Timestamptz(3)
+
+  patient   Patient               @relation(fields: [patientId], references: [id])
+  doctor    DoctorProfile         @relation(fields: [doctorId], references: [id])
+  encounter Encounter             @relation(fields: [encounterId], references: [id])
+  items     PrescriptionItem[]
+  versions  PrescriptionVersion[]
+
+  @@index([patientId, createdAt])
+  @@index([doctorId, createdAt])
+}
+
+/// Working (draft) line items. Editable only while the prescription is DRAFT.
+model PrescriptionItem {
+  id             String  @id @default(cuid())
+  prescriptionId String
+  medicationId   String?
+  medicineName   String
+  strength       String?
+  dose           String
+  route          String
+  frequency      String
+  timing         String?
+  durationDays   Int
+  quantity       String?
+  instructions   String?
+  refills        Int     @default(0)
+  sortOrder      Int     @default(0)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medication   Medication?  @relation(fields: [medicationId], references: [id])
+
+  @@index([prescriptionId, sortOrder])
+}
+
+/// Immutable finalized snapshot. UPDATE/DELETE are blocked by a DB trigger.
+model PrescriptionVersion {
+  id              String          @id @default(cuid())
+  prescriptionId  String
+  versionNumber   Int
+  snapshot        Json
+  contentHash     String
+  amendmentReason String?
+  signedById      String
+  signatureMethod SignatureMethod @default(SESSION_ATTESTATION)
+  signatureRef    String?
+  documentId      String?
+  createdAt       DateTime        @default(now()) @db.Timestamptz(3)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id])
+
+  @@unique([prescriptionId, versionNumber])
+}
+
+// ─────────────────────────── Investigations / Lab ───────────────────────────
+
+/// Investigation catalog. `parameters` = [{code,name,unit,refLow,refHigh,refText}]
+model Investigation {
+  id         String                @id @default(cuid())
+  code       String                @unique
+  name       String
+  category   InvestigationCategory
+  sampleType String?
+  parameters Json                  @default("[]")
+  isActive   Boolean               @default(true)
+
+  orders InvestigationOrder[]
+}
+
+model InvestigationOrder {
+  id                  String              @id @default(cuid())
+  orderNumber         String              @unique
+  patientId           String
+  doctorId            String
+  encounterId         String?
+  facilityId          String
+  investigationId     String
+  priority            OrderPriority       @default(ROUTINE)
+  status              InvestigationStatus @default(ORDERED)
+  clinicalNotes       String?
+  assignedToId        String?
+  scheduledAt         DateTime?           @db.Timestamptz(3)
+  collectedAt         DateTime?           @db.Timestamptz(3)
+  processingAt        DateTime?           @db.Timestamptz(3)
+  completedAt         DateTime?           @db.Timestamptz(3)
+  verifiedAt          DateTime?           @db.Timestamptz(3)
+  verifiedById        String?
+  cancelledAt         DateTime?           @db.Timestamptz(3)
+  releasedToPatientAt DateTime?           @db.Timestamptz(3)
+  doctorComment       String?
+  createdAt           DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime            @updatedAt @db.Timestamptz(3)
+
+  patient       Patient               @relation(fields: [patientId], references: [id])
+  doctor        DoctorProfile         @relation(fields: [doctorId], references: [id])
+  encounter     Encounter?            @relation(fields: [encounterId], references: [id])
+  investigation Investigation         @relation(fields: [investigationId], references: [id])
+  results       InvestigationResult[]
+  report        LabReport?
+
+  @@index([patientId, createdAt])
+  @@index([facilityId, status])
+  @@index([doctorId, status])
+}
+
+model InvestigationResult {
+  id            String       @id @default(cuid())
+  orderId       String
+  parameterCode String
+  parameterName String
+  valueNumeric  Decimal?     @db.Decimal(12, 4)
+  valueText     String?
+  unit          String?
+  refLow        Decimal?     @db.Decimal(12, 4)
+  refHigh       Decimal?     @db.Decimal(12, 4)
+  refText       String?
+  abnormalFlag  AbnormalFlag @default(NOT_APPLICABLE)
+  status        RecordStatus @default(ACTIVE)
+  correctsId    String?
+  enteredById   String
+  enteredAt     DateTime     @default(now()) @db.Timestamptz(3)
+
+  order InvestigationOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([parameterCode])
+}
+
+model LabReport {
+  id           String    @id @default(cuid())
+  orderId      String    @unique
+  documentId   String?
+  summary      String?
+  verifiedById String?
+  verifiedAt   DateTime? @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  order InvestigationOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────── Documents ───────────────────────────────
+
+model MedicalDocument {
+  id               String             @id @default(cuid())
+  patientId        String
+  encounterId      String?
+  type             DocumentType
+  title            String
+  storageKey       String             @unique
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  sha256           String
+  visibility       DocumentVisibility @default(PATIENT_VISIBLE)
+  uploadedById     String
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+  deletedAt        DateTime?          @db.Timestamptz(3)
+
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  encounter Encounter? @relation(fields: [encounterId], references: [id])
+
+  @@index([patientId, createdAt])
+}
+
+/// Opaque, hashed, short-lived tokens used in SMS/WhatsApp links. They only deep-link into the
+/// authenticated portal; the portal still requires the patient to sign in.
+model SecureLink {
+  id           String            @id @default(cuid())
+  tokenHash    String            @unique
+  purpose      SecureLinkPurpose
+  resourceType String
+  resourceId   String
+  patientId    String
+  expiresAt    DateTime          @db.Timestamptz(3)
+  maxUses      Int               @default(5)
+  useCount     Int               @default(0)
+  createdAt    DateTime          @default(now()) @db.Timestamptz(3)
+}
+
+// ─────────────────────────────── Billing ───────────────────────────────
+
+model Service {
+  id         String          @id @default(cuid())
+  facilityId String
+  code       String
+  name       String
+  category   ServiceCategory
+  price      Decimal         @db.Decimal(12, 2)
+  taxRatePct Decimal         @default(0) @db.Decimal(5, 2)
+  isActive   Boolean         @default(true)
+
+  facility Facility      @relation(fields: [facilityId], references: [id])
+  items    InvoiceItem[]
+
+  @@unique([facilityId, code])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  facilityId    String
+  patientId     String
+  appointmentId String?
+  status        InvoiceStatus @default(DRAFT)
+  currency      String        @default("INR")
+  subtotal      Decimal       @db.Decimal(12, 2)
+  discount      Decimal       @default(0) @db.Decimal(12, 2)
+  tax           Decimal       @default(0) @db.Decimal(12, 2)
+  total         Decimal       @db.Decimal(12, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(12, 2)
+  issuedAt      DateTime?     @db.Timestamptz(3)
+  createdById   String?
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+
+  facility    Facility      @relation(fields: [facilityId], references: [id])
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id])
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@index([patientId, createdAt])
+  @@index([facilityId, createdAt])
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  serviceId   String?
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  discount    Decimal  @default(0) @db.Decimal(12, 2)
+  taxRatePct  Decimal  @default(0) @db.Decimal(5, 2)
+  amount      Decimal  @db.Decimal(12, 2)
+
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  service Service? @relation(fields: [serviceId], references: [id])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  invoiceId      String
+  amount         Decimal       @db.Decimal(12, 2)
+  refundedAmount Decimal       @default(0) @db.Decimal(12, 2)
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  provider       String
+  providerRef    String?
+  idempotencyKey String?       @unique
+  failureReason  String?
+  createdById    String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  paidAt         DateTime?     @db.Timestamptz(3)
+  refundedAt     DateTime?     @db.Timestamptz(3)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+}
+
+// ─────────────────────────────── Notifications ───────────────────────────────
+
+model Notification {
+  id            String              @id @default(cuid())
+  patientId     String?
+  channel       NotificationChannel
+  templateKey   String
+  purpose       String
+  status        NotificationStatus  @default(QUEUED)
+  dedupeKey     String              @unique
+  recipient     String?
+  variables     Json                @default("{}")
+  attempts      Int                 @default(0)
+  nextAttemptAt DateTime?           @db.Timestamptz(3)
+  lastError     String?
+  createdAt     DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime            @updatedAt @db.Timestamptz(3)
+
+  patient Patient?                  @relation(fields: [patientId], references: [id])
+  logs    NotificationDeliveryLog[]
+
+  @@index([status, nextAttemptAt])
+  @@index([patientId, createdAt])
+}
+
+/// Append-only consent history. The latest row per (patient, channel, purpose) is the effective state.
+model NotificationConsent {
+  id           String              @id @default(cuid())
+  patientId    String
+  channel      NotificationChannel
+  purpose      String              @default("TRANSACTIONAL")
+  optedIn      Boolean
+  source       ConsentSource
+  recordedById String?
+  consentText  String?
+  createdAt    DateTime            @default(now()) @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, channel, purpose, createdAt])
+}
+
+model NotificationDeliveryLog {
+  id                String              @id @default(cuid())
+  notificationId    String
+  patientId         String?
+  channel           NotificationChannel
+  templateKey       String
+  purpose           String
+  provider          String
+  providerMessageId String?
+  status            NotificationStatus
+  attempt           Int
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  sentAt            DateTime?           @db.Timestamptz(3)
+  deliveredAt       DateTime?           @db.Timestamptz(3)
+  readAt            DateTime?           @db.Timestamptz(3)
+  failedAt          DateTime?           @db.Timestamptz(3)
+  failureReason     String?
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([providerMessageId])
+}
+
+// ─────────────────────────────── Audit ───────────────────────────────
+
+/// Append-only. UPDATE/DELETE blocked by DB trigger.
+model AuditLog {
+  id             String       @id @default(cuid())
+  actorUserId    String?
+  actorRoles     String[]
+  action         String
+  resourceType   String
+  resourceId     String?
+  organizationId String?
+  facilityId     String?
+  outcome        AuditOutcome @default(SUCCESS)
+  reason         String?
+  before         Json?
+  after          Json?
+  ip             String?
+  userAgent      String?
+  requestId      String?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  actor User? @relation(fields: [actorUserId], references: [id])
+
+  @@index([resourceType, resourceId])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────── Teleconsultation ───────────────────────────
+
+model Teleconsultation {
+  id               String            @id @default(cuid())
+  appointmentId    String            @unique
+  provider         String
+  sessionRef       String
+  status           TeleconsultStatus @default(SCHEDULED)
+  patientConsentAt DateTime?         @db.Timestamptz(3)
+  doctorJoinedAt   DateTime?         @db.Timestamptz(3)
+  patientJoinedAt  DateTime?         @db.Timestamptz(3)
+  endedAt          DateTime?         @db.Timestamptz(3)
+  modalityNote     String?
+  createdAt        DateTime          @default(now()) @db.Timestamptz(3)
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}
+
+// ─────────────────────────── Health data ───────────────────────────
+
+model HealthDataSource {
+  id                  String                 @id @default(cuid())
+  patientId           String
+  providerType        HealthProviderType
+  deviceName          String?
+  deviceModel         String?
+  permissionStatus    HealthPermissionStatus @default(NOT_REQUESTED)
+  scopes              String[]
+  permissionGrantedAt DateTime?              @db.Timestamptz(3)
+  revokedAt           DateTime?              @db.Timestamptz(3)
+  lastSyncAt          DateTime?              @db.Timestamptz(3)
+  createdAt           DateTime               @default(now()) @db.Timestamptz(3)
+
+  patient  Patient             @relation(fields: [patientId], references: [id])
+  readings HealthDataReading[]
+
+  @@unique([patientId, providerType])
+}
+
+model HealthDataReading {
+  id                   String            @id @default(cuid())
+  patientId            String
+  sourceId             String
+  metric               String
+  value                Decimal           @db.Decimal(8, 2)
+  unit                 String
+  measuredAt           DateTime          @db.Timestamptz(3)
+  receivedAt           DateTime          @default(now()) @db.Timestamptz(3)
+  context              String?
+  accuracyMeta         Json?
+  validation           ReadingValidation
+  validationMessage    String?
+  isClinicallyValidated Boolean          @default(false)
+  flag                 MeasurementFlag   @default(NOT_EVALUATED)
+  externalId           String?
+  promotedVitalId      String?
+
+  patient Patient          @relation(fields: [patientId], references: [id])
+  source  HealthDataSource @relation(fields: [sourceId], references: [id])
+
+  @@unique([sourceId, externalId])
+  @@index([patientId, metric, measuredAt])
+}
+
+// ─────────────────────────── Privacy & retention ───────────────────────────
+
+model PrivacyRequest {
+  id          String               @id @default(cuid())
+  patientId   String
+  type        PrivacyRequestType
+  status      PrivacyRequestStatus @default(RECEIVED)
+  details     String?
+  requestedBy String
+  resolvedBy  String?
+  resolution  String?
+  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  resolvedAt  DateTime?            @db.Timestamptz(3)
+
+  patient Patient @relation(fields: [patientId], references: [id])
+}
+
+/// Configurable retention. Values must be set per applicable law after legal review.
+model RetentionPolicy {
+  id             String   @id @default(cuid())
+  organizationId String
+  resourceType   String
+  retainYears    Int
+  action         String   @default("ARCHIVE")
+  legalBasisNote String?
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, resourceType])
+}

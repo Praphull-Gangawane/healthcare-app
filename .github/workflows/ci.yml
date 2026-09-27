@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Lint, typecheck, unit, API & E2E tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: careflow
+          POSTGRES_PASSWORD: careflow_ci
+          POSTGRES_DB: careflow_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U careflow -d careflow_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    # Ephemeral CI database with fictional seed data only. Never point CI at production data.
+    env:
+      CI: 'true'
+      NODE_ENV: test
+      DATABASE_URL: postgresql://careflow:careflow_ci@localhost:5432/careflow_ci?schema=public
+      # Playwright starts its own API (port 4100) against this isolated DB and reseeds it on start.
+      TEST_DATABASE_URL: postgresql://careflow:careflow_ci@localhost:5432/careflow_test
+      APP_BASE_URL: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5173
+      DEMO_MODE: 'true'
+      ENABLE_TEST_ROUTES: 'true'
+      SEED_DEMO_PASSWORD: Demo@12345
+      NOTIFICATION_WORKER_INTERVAL_MS: '0'
+      STORAGE_PROVIDER: local
+      STORAGE_LOCAL_DIR: ./var/storage-ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Generate a throwaway AUTH_SECRET for this job
+        run: |
+          secret="$(openssl rand -base64 48 | tr -d '\n')"
+          echo "::add-mask::$secret"
+          echo "AUTH_SECRET=$secret" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (all workspaces)
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Unit tests (vitest)
+        run: npm run test:unit
+
+      - name: Build
+        run: npm run build
+
+      - name: Database setup smoke check (migrate deploy + seed)
+        run: |
+          npm run db:deploy
+          npm run db:seed
+
+      - name: API tests (Playwright request context)
+        run: npx playwright test --project=api
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests (desktop, mobile, tablet)
+        run: npx playwright test --project=desktop-chromium --project=mobile-chromium --project=tablet
+
+      - name: Upload Playwright HTML report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload test results (traces, screenshots, videos)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

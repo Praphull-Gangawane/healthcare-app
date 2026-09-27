@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+coverage/
+server/src/generated/
+server/prisma/migrations/
+playwright-report/
+test-results/
+blob-report/
+var/
+server/var/
+package-lock.json
+demo/*.html
